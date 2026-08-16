@@ -1,6 +1,6 @@
 /**
  * GaneMaX Basketball Controller
- * Mengelola Navigasi Multi-Liga, Overall Standings, Modal BoxScore, H2H, dan Gemini AI
+ * Mengelola Navigasi Liga, Overall Standings, Modal BoxScore, dan Pencarian Real-Time
  */
 
 const LEAGUES = [
@@ -113,9 +113,6 @@ function setupEventListeners() {
       loadDashboardData();
     }
   });
-
-  document.getElementById('btn-refresh-desktop')?.addEventListener('click', triggerManualRefresh);
-  document.getElementById('btn-refresh-mobile')?.addEventListener('click', triggerManualRefresh);
 
   document.getElementById('btn-toggle-odds')?.addEventListener('click', () => {
     AppState.oddsVisible = !AppState.oddsVisible;
@@ -841,11 +838,13 @@ function renderAIPredictions(events) {
 }
 
 function showRefreshAnimation(isLoading) {
-  const icon = document.getElementById('refresh-icon');
-  if (icon) {
-    if (isLoading) icon.classList.add('animate-spin');
-    else icon.classList.remove('animate-spin');
-  }
+  ['refresh-icon', 'refresh-icon-mob'].forEach(id => {
+    const icon = document.getElementById(id);
+    if (icon) {
+      if (isLoading) icon.classList.add('animate-spin');
+      else icon.classList.remove('animate-spin');
+    }
+  });
 }
 
 function triggerManualRefresh() {
