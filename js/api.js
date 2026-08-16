@@ -1,12 +1,12 @@
 /**
- * Service API Public ESPN & Gemini 2.5 Flash Engine
+ * Service API Public ESPN & Gemini AI Engine
  * Mengelola Komunikasi Data Liga Basketball & AI Predictions
  */
 class EspnApiService {
   constructor() {
     this.baseUrlV2 = 'https://site.api.espn.com/apis/site/v2/sports/basketball';
     this.baseUrlV2Core = 'https://site.api.espn.com/apis/v2/sports/basketball';
-    this.geminiApiKey = ''; // Canvas runtime API key binding
+    this.geminiApiKey = '';
   }
 
   async getScoreboard(league = 'nba', dateStr = '') {
