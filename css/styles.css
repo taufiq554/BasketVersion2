@@ -1,1 +1,40 @@
-/* ==========================================================GANEMAX BASKETBALL - STYLING & ANIMATIONS (CLEAN VALID CSS)========================================================== *//* Modern Custom Scrollbar */::-webkit-scrollbar {width: 6px;height: 6px;}::-webkit-scrollbar-track {background: #F8FAFC;}::-webkit-scrollbar-thumb {background: #CBD5E1;border-radius: 4px;}::-webkit-scrollbar-thumb:hover {background: #0055FF;}.no-scrollbar::-webkit-scrollbar {display: none;}.no-scrollbar {-ms-overflow-style: none;scrollbar-width: none;}/* Animations & Keyframes */@keyframes fadeInUp {from {opacity: 0;transform: translateY(12px);}to {opacity: 1;transform: translateY(0);}}.fade-in-up {animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;}@keyframes scaleUp {from {opacity: 0;transform: scale(0.95);}to {opacity: 1;transform: scale(1);}}.animate-scale-up {animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;}@keyframes spinSlow {from {transform: rotate(0deg);}to {transform: rotate(360deg);}}.animate-spin-slow {animation: spinSlow 10s linear infinite;}/* Card Hover Micro-Interactions */.hover-card-rise {transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;}.hover-card-rise:hover {transform: translateY(-2px);box-shadow: 0 10px 25px -5px rgba(0, 85, 255, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);border-color: rgba(0, 85, 255, 0.4);}/* Navigation Pills & Active Tabs */.league-pill-active {background-color: #0055FF !important;color: #FFFFFF !important;border-color: #0055FF !important;box-shadow: 0 4px 12px rgba(0, 85, 255, 0.25);}.tab-btn-active {background-color: #0055FF !important;color: #FFFFFF !important;border-color: #0055FF !important;box-shadow: 0 2px 8px rgba(0, 85, 255, 0.2);}/* Status Badges */.badge-live {background-color: rgba(239, 68, 68, 0.1);color: #DC2626;border: 1px solid rgba(239, 68, 68, 0.3);}.badge-final {background-color: rgba(100, 116, 139, 0.1);color: #475569;border: 1px solid rgba(100, 116, 139, 0.3);}.badge-scheduled {background-color: rgba(0, 85, 255, 0.1);color: #0055FF;border: 1px solid rgba(0, 85, 255, 0.3);}
+/* === FONTS & CDN RESOURCES === */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
+/* === ULTRA-FAST & LIGHTWEIGHT RENDERING STYLES === */
+*, *::before, *::after {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth reveal transitions without GPU overload */
+.reveal {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+    will-change: opacity, transform;
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+}
+
+/* Lightweight Hover Cards */
+.hover-card-rise {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-card-rise:hover {
+    transform: translate3d(0, -4px, 0);
+    box-shadow: 0 12px 20px -6px rgba(37, 99, 235, 0.12);
+}
+
+/* Subtle glow pulse for primary CTA */
+.btn-glow {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-glow:hover {
+    box-shadow: 0 8px 25px -4px rgba(37, 99, 235, 0.45);
+}
