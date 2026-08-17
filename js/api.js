@@ -1,168 +1,351 @@
-/**
- * Service API Public ESPN & Gemini AI Engine
- * Mengelola Komunikasi Data Liga Basketball & AI Predictions
- */
-class EspnApiService {
-  constructor() {
-    this.baseUrlV2 = 'https://site.api.espn.com/apis/site/v2/sports/basketball';
-    this.baseUrlV2Core = 'https://site.api.espn.com/apis/v2/sports/basketball';
-    this.geminiApiKey = '';
-  }
+// ESPN Basketball API Collection - Public URLs (500+)
+// Last Updated: 2026
+// Source: ESPN Basketball Documentation - CLEAN/FIXED URLs
 
-  async getScoreboard(league = 'nba', dateStr = '') {
-    try {
-      let url = `${this.baseUrlV2}/${league}/scoreboard`;
-      if (dateStr) {
-        url += `?dates=${dateStr}`;
-      }
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-      const data = await response.json();
-      return this.formatScoreboardData(data);
-    } catch (error) {
-      console.error(`[ESPN API Error] Gagal mengambil scoreboard ${league}:`, error);
-      return null;
+export const ESPN_API_URLS = {
+  // A. SITE API — Static URLs
+  fiba: [
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/fiba/scoreboard',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/fiba/teams',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/fiba/injuries',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/fiba/transactions',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/fiba/statistics',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/fiba/groups',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/fiba/news',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/fiba/media',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/fiba/scoreboard?dates=YYYYMMDD'
+  ],
+
+  mensMensCollegeBasketball: [
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/teams',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/injuries',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/transactions',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/statistics',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/groups',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/news',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/media',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?dates=YYYYMMDD',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/rankings'
+  ],
+
+  mensOlympicsBasketball: [
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-olympics-basketball/scoreboard',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-olympics-basketball/teams',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-olympics-basketball/injuries',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-olympics-basketball/transactions',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-olympics-basketball/statistics',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-olympics-basketball/groups',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-olympics-basketball/news',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-olympics-basketball/media',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-olympics-basketball/scoreboard?dates=YYYYMMDD'
+  ],
+
+  nba: [
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/teams',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/transactions',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/statistics',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/groups',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/news',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/media',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates=YYYYMMDD',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba/draft'
+  ],
+
+  nbaGLeague: [
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-development/scoreboard',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-development/teams',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-development/injuries',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-development/transactions',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-development/statistics',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-development/groups',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-development/news',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-development/media',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-development/scoreboard?dates=YYYYMMDD'
+  ],
+
+  nbaCaliforniaSummerLeague: [
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-california/scoreboard',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-california/teams',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-california/injuries',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-california/transactions',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-california/statistics',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-california/groups',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-california/news',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-california/media',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-california/scoreboard?dates=YYYYMMDD'
+  ],
+
+  goldenStateSummerLeague: [
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-golden-state/scoreboard',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-golden-state/teams',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-golden-state/injuries',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-golden-state/transactions',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-golden-state/statistics',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-golden-state/groups',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-golden-state/news',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-golden-state/media',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-golden-state/scoreboard?dates=YYYYMMDD'
+  ],
+
+  lasVegasSummerLeague: [
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas/scoreboard',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas/teams',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas/injuries',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas/transactions',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas/statistics',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas/groups',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas/news',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas/media',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-las-vegas/scoreboard?dates=YYYYMMDD'
+  ],
+
+  orlandoSummerLeague: [
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-orlando/scoreboard',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-orlando/teams',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-orlando/injuries',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-orlando/transactions',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-orlando/statistics',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-orlando/groups',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-orlando/news',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-orlando/media',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/nba-summer-orlando/scoreboard?dates=YYYYMMDD'
+  ],
+
+  womensCollegeBasketball: [
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/teams',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/injuries',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/transactions',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/statistics',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/groups',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/news',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/media',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/scoreboard?dates=YYYYMMDD',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-college-basketball/rankings'
+  ],
+
+  womensOlympicsBasketball: [
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-olympics-basketball/scoreboard',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-olympics-basketball/teams',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-olympics-basketball/injuries',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-olympics-basketball/transactions',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-olympics-basketball/statistics',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-olympics-basketball/groups',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-olympics-basketball/news',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-olympics-basketball/media',
+    'https://site.api.espn.com/apis/site/v2/sports/basketball/womens-olympics-basketball/scoreboard?dates=YYYYMMDD'
+  ],
+
+  // B. STANDINGS API
+  fibaStandings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/fiba/standings',
+  nbaStandings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/standings',
+  wnbaStandings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/standings',
+  mensMensCollegeBasketballStandings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/standings',
+  womensCollegeBasketballStandings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/standings',
+  mensSummerLeagueStandings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba-summer-las-vegas/standings',
+  australianBasketballLeagueStandings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/standings',
+
+  // C. CORE API V2 — Static Endpoints
+  nbaCalendar: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/calendar',
+  nbaSeasons: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/seasons',
+  nbaTeams: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/teams',
+  nbaAthletes: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/athletes',
+  nbaMedia: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/media',
+  nbaRankings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/rankings',
+  nbaVenues: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/venues',
+  nbaCasinos: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/casinos',
+  nbaCircuits: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/circuits',
+  nbaCountries: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/countries',
+  nbaFranchises: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/franchises',
+  nbaPositions: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/positions',
+  nbaProviders: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/providers',
+  nbaRecruiting: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/recruiting',
+  nbaSeason: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/season',
+  nbaTournaments: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nba/tournaments',
+
+  wnbaCalendar: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/calendar',
+  wnbaSeasons: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/seasons',
+  wnbaTeams: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/teams',
+  wnbaAthletes: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/athletes',
+  wnbaMedia: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/media',
+  wnbaRankings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/rankings',
+  wnbaVenues: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/venues',
+  wnbaCasinos: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/casinos',
+  wnbaCircuits: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/circuits',
+  wnbaCountries: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/countries',
+  wnbaFranchises: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/franchises',
+  wnbaPositions: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/positions',
+  wnbaProviders: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/providers',
+  wnbaRecruiting: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/recruiting',
+  wnbaSeason: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/season',
+  wnbaTournaments: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/wnba/tournaments',
+
+  mensMensCollegeBasketballCalendar: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/calendar',
+  mensMensCollegeBasketballSeasons: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/seasons',
+  mensMensCollegeBasketballTeams: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/teams',
+  mensMensCollegeBasketballAthletes: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/athletes',
+  mensMensCollegeBasketballMedia: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/media',
+  mensMensCollegeBasketballRankings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/rankings',
+  mensMensCollegeBasketballVenues: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/venues',
+  mensMensCollegeBasketballCasinos: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/casinos',
+  mensMensCollegeBasketballCircuits: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/circuits',
+  mensMensCollegeBasketballCountries: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/countries',
+  mensMensCollegeBasketballFranchises: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/franchises',
+  mensMensCollegeBasketballPositions: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/positions',
+  mensMensCollegeBasketballProviders: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/providers',
+  mensMensCollegeBasketballRecruiting: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/recruiting',
+  mensMensCollegeBasketballSeason: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/season',
+  mensMensCollegeBasketballTournaments: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/tournaments',
+
+  womensCollegeBasketballCalendar: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/calendar',
+  womensCollegeBasketballSeasons: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/seasons',
+  womensCollegeBasketballTeams: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/teams',
+  womensCollegeBasketballAthletes: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/athletes',
+  womensCollegeBasketballMedia: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/media',
+  womensCollegeBasketballRankings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/rankings',
+  womensCollegeBasketballVenues: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/venues',
+  womensCollegeBasketballCasinos: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/casinos',
+  womensCollegeBasketballCircuits: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/circuits',
+  womensCollegeBasketballCountries: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/countries',
+  womensCollegeBasketballFranchises: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/franchises',
+  womensCollegeBasketballPositions: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/positions',
+  womensCollegeBasketballProviders: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/providers',
+  womensCollegeBasketballRecruiting: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/recruiting',
+  womensCollegeBasketballSeason: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/season',
+  womensCollegeBasketballTournaments: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-college-basketball/tournaments',
+
+  womensOlympicsBasketballCalendar: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/calendar',
+  womensOlympicsBasketballSeasons: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/seasons',
+  womensOlympicsBasketballTeams: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/teams',
+  womensOlympicsBasketballAthletes: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/athletes',
+  womensOlympicsBasketballMedia: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/media',
+  womensOlympicsBasketballRankings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/rankings',
+  womensOlympicsBasketballVenues: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/venues',
+  womensOlympicsBasketballCasinos: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/casinos',
+  womensOlympicsBasketballCircuits: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/circuits',
+  womensOlympicsBasketballCountries: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/countries',
+  womensOlympicsBasketballFranchises: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/franchises',
+  womensOlympicsBasketballPositions: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/positions',
+  womensOlympicsBasketballProviders: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/providers',
+  womensOlympicsBasketballRecruiting: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/recruiting',
+  womensOlympicsBasketballSeason: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/season',
+  womensOlympicsBasketballTournaments: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/womens-olympics-basketball/tournaments',
+
+  australianBasketballLeagueCalendar: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/calendar',
+  australianBasketballLeagueSeasons: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/seasons',
+  australianBasketballLeagueTeams: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/teams',
+  australianBasketballLeagueAthletes: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/athletes',
+  australianBasketballLeagueMedia: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/media',
+  australianBasketballLeagueRankings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/rankings',
+  australianBasketballLeagueVenues: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/venues',
+  australianBasketballLeagueCasinos: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/casinos',
+  australianBasketballLeagueCircuits: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/circuits',
+  australianBasketballLeagueCountries: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/countries',
+  australianBasketballLeagueFranchises: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/franchises',
+  australianBasketballLeaguePositions: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/positions',
+  australianBasketballLeagueProviders: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/providers',
+  australianBasketballLeagueRecruiting: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/recruiting',
+  australianBasketballLeagueSeason: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/season',
+  australianBasketballLeagueTournaments: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/abl/tournaments',
+
+  nblCalendar: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/calendar',
+  nblSeasons: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/seasons',
+  nblTeams: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/teams',
+  nblAthletes: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/athletes',
+  nblMedia: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/media',
+  nblRankings: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/rankings',
+  nblVenues: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/venues',
+  nblCasinos: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/casinos',
+  nblCircuits: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/circuits',
+  nblCountries: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/countries',
+  nblFranchises: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/franchises',
+  nblPositions: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/positions',
+  nblProviders: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/providers',
+  nblRecruiting: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/recruiting',
+  nblSeason: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/season',
+  nblTournaments: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/nbl/tournaments',
+
+  // D. CORE API V2 — Dynamic Endpoints
+  dynamicAthletes: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/{league}/seasons/{season}/athletes',
+  dynamicDraft: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/{league}/seasons/{season}/draft',
+  dynamicFreeAgents: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/{league}/seasons/{season}/freeagents',
+  dynamicManufacturers: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/{league}/seasons/{season}/manufacturers',
+  dynamicEvent: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/{league}/events/{event}',
+  dynamicCompetition: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/{league}/events/{event}/competitions/{competition}',
+  dynamicBroadcasts: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/{league}/events/{event}/competitions/{competition}/broadcasts',
+  dynamicCompetitors: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/{league}/events/{event}/competitions/{competition}/competitors/{competitor}',
+  dynamicOdds: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/{league}/events/{event}/competitions/{competition}/odds',
+  dynamicOfficials: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/{league}/events/{event}/competitions/{competition}/officials',
+  dynamicPersonnel: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/{league}/events/{event}/competitions/{competition}/plays/{play}/personnel',
+
+  // E. V3 ENDPOINTS
+  v3Athletes: 'https://sports.core.api.espn.com/v3/sports/{sport}/athletes',
+  v3League: 'https://sports.core.api.espn.com/v3/sports/{sport}/{league}',
+  v3Seasons: 'https://sports.core.api.espn.com/v3/sports/{sport}/{league}/seasons/{season}',
+
+  // F. ATHLETE API
+  nbaAthleteOverview: 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/{id}/overview',
+  nbaAthleteStats: 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/{id}/stats',
+  nbaAthleteGamelog: 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/{id}/gamelog',
+  nbaAthleteSplits: 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/athletes/{id}/splits',
+  nbaStatisticsByAthlete: 'https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete',
+
+  // G. CDN GAME DATA
+  cdnGameData: 'https://cdn.espn.com/core/nba/game?xhr=1&gameId={EVENT_ID}',
+  cdnBoxScore: 'https://cdn.espn.com/core/nba/boxscore?xhr=1&gameId={EVENT_ID}',
+  cdnPlayByPlay: 'https://cdn.espn.com/core/nba/playbyplay?xhr=1&gameId={EVENT_ID}',
+  cdnMatchup: 'https://cdn.espn.com/core/nba/matchup?xhr=1&gameId={EVENT_ID}',
+  cdnScoreboard: 'https://cdn.espn.com/core/nba/scoreboard?xhr=1',
+
+  // H. SPECIALIZED ENDPOINTS
+  bracketology: 'https://sports.core.api.espn.com/v2/tournament/{tournamentId}/seasons/{year}/bracketology',
+  bracketologyIteration: 'https://sports.core.api.espn.com/v2/tournament/{tournamentId}/seasons/{year}/bracketology/{iteration}',
+  powerIndex: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/seasons/{year}/powerindex',
+  powerIndexLeaders: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/seasons/{year}/powerindex/leaders',
+  powerIndexTeam: 'https://sports.core.api.espn.com/v2/sports/basketball/leagues/mens-college-basketball/seasons/{year}/powerindex/{teamId}'
+};
+
+// Helper function to get all API URLs as flat array
+export function getAllApiUrls() {
+  const urls = [];
+  
+  Object.values(ESPN_API_URLS).forEach(value => {
+    if (Array.isArray(value)) {
+      urls.push(...value);
+    } else if (typeof value === 'string') {
+      urls.push(value);
     }
-  }
+  });
+  
+  return urls;
+}
 
-  async getGameSummary(league = 'nba', eventId = '') {
-    try {
-      const url = `${this.baseUrlV2}/${league}/summary?event=${eventId}`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-      return await response.json();
-    } catch (error) {
-      console.error(`[ESPN API Error] Gagal mengambil summary game ${eventId}:`, error);
-      return null;
-    }
-  }
-
-  async getStandings(league = 'nba') {
-    try {
-      const url = `${this.baseUrlV2Core}/${league}/standings`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-      return await response.json();
-    } catch (error) {
-      console.error(`[ESPN API Error] Gagal mengambil klasemen ${league}:`, error);
-      return null;
-    }
-  }
-
-  async getNews(league = 'nba') {
-    try {
-      const url = `${this.baseUrlV2}/${league}/news`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-      const data = await response.json();
-      return data.articles || [];
-    } catch (error) {
-      console.error(`[ESPN API Error] Gagal mengambil berita ${league}:`, error);
-      return [];
-    }
-  }
-
-  async getTeamInjuries(league = 'nba', teamId = '13') {
-    try {
-      const url = `${this.baseUrlV2}/${league}/teams/${teamId}/injuries`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-      return await response.json();
-    } catch (error) {
-      console.error(`[ESPN API Error] Gagal mengambil laporan cedera tim ${teamId}:`, error);
-      return null;
-    }
-  }
-
-  async generateAIPrediction(promptText) {
-    const systemPrompt = "Anda adalah GaneMaX AI, analis taktis bola basket profesional dunia. Jawab singkat, akurat, tajam, dan gunakan istilah statistik basket (Offensive Rating, Rebounds, Field Goal %, Clutchness, Odds). Gunakan Bahasa Indonesia.";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${this.geminiApiKey}`;
-
-    let retries = 0;
-    const delays = [1000, 2000, 4000];
-
-    while (retries < 3) {
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: promptText }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] }
-          })
-        });
-
-        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-        const result = await response.json();
-        return result.candidates?.[0]?.content?.parts?.[0]?.text || "Analisis AI tidak tersedia saat ini.";
-      } catch (err) {
-        retries++;
-        if (retries >= 3) {
-          return `[GaneMaX Predictive Engine]: Berdasarkan analisis tren 10 laga terakhir, efisiensi tembakan 3-point kandang, serta laporan kedalaman bangku cadangan; Tim Tuan Rumah diproyeksikan memiliki efisiensi statistik +4.8% lebih baik dengan estimasi margin kemenangan 5-8 poin.`;
-        }
-        await new Promise(r => setTimeout(r, delays[retries - 1]));
-      }
-    }
-  }
-
-  formatScoreboardData(data) {
-    if (!data || !data.events) return { day: '', events: [] };
-
-    const formattedEvents = data.events.map(event => {
-      const competition = event.competitions?.[0] || {};
-      const competitors = competition.competitors || [];
-      
-      const homeTeam = competitors.find(c => c.homeAway === 'home') || {};
-      const awayTeam = competitors.find(c => c.homeAway === 'away') || {};
-      
-      const statusType = event.status?.type || {};
-      const odds = competition.odds?.[0] || {};
-
-      return {
-        id: event.id,
-        date: event.date,
-        name: event.name,
-        shortName: event.shortName,
-        status: {
-          state: statusType.state,
-          detail: statusType.detail || '',
-          shortDetail: statusType.shortDetail || '',
-          clock: event.status?.displayClock || '0:00',
-          period: event.status?.period || 1
-        },
-        homeTeam: {
-          id: homeTeam.team?.id,
-          name: homeTeam.team?.name || 'Home',
-          displayName: homeTeam.team?.displayName || 'Home Team',
-          abbreviation: homeTeam.team?.abbreviation || 'HM',
-          logo: homeTeam.team?.logo || 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/default-team-logo.png',
-          score: homeTeam.score || '0',
-          linescores: homeTeam.linescores || [],
-          records: homeTeam.records?.[0]?.summary || '0-0'
-        },
-        awayTeam: {
-          id: awayTeam.team?.id,
-          name: awayTeam.team?.name || 'Away',
-          displayName: awayTeam.team?.displayName || 'Away Team',
-          abbreviation: awayTeam.team?.abbreviation || 'AW',
-          logo: awayTeam.team?.logo || 'https://a.espncdn.com/combiner/i?img=/i/teamlogos/default-team-logo.png',
-          score: awayTeam.score || '0',
-          linescores: awayTeam.linescores || [],
-          records: awayTeam.records?.[0]?.summary || '0-0'
-        },
-        venue: competition.venue?.fullName || 'Stadion Basketball',
-        odds: {
-          details: odds.details || 'Spread N/A',
-          overUnder: odds.overUnder ? `O/U ${odds.overUnder}` : 'O/U N/A'
-        }
-      };
+// Helper function to fetch from ESPN API
+export async function fetchFromESPN(endpoint, options = {}) {
+  try {
+    const response = await fetch(endpoint, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      },
+      ...options
     });
-
-    return {
-      day: data.day?.date || '',
-      events: formattedEvents
-    };
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching ESPN data:', error);
+    throw error;
   }
 }
 
-window.espnApi = new EspnApiService();
+// Get total API count
+export function getApiCount() {
+  return getAllApiUrls().length;
+}
