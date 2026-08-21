@@ -1,294 +1,432 @@
-/* =====================================================
-   TAILWIND CSS CONFIGURATION & CUSTOM STYLES
-   GaneMaX.ai Live Basketball Pro Broadcast
-   ===================================================== */
+/* ============================================
+   GaneMaX Basketball - Global Styles
+   ============================================ */
 
-/* Base body styles */
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: #FFFFFF;
-  color: #0A0B0D;
+/* ============================================
+   Tailwind Custom Utilities
+   ============================================ */
+@layer utilities {
+  .app-card {
+    @apply bg-white border border-slate-200/90 shadow-app rounded-2xl transition-all duration-200;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #F1F5F9;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #0055FF;
+    border-radius: 4px;
+  }
+  .tab-btn-active {
+    @apply bg-action-blue text-white shadow-md shadow-action-blue/20 font-bold !important;
+  }
+  .mobile-nav-item.active {
+    @apply text-action-blue font-bold scale-105;
+  }
 }
 
-.font-sora { 
-  font-family: 'Sora', sans-serif; 
+/* ============================================
+   Custom Properties (CSS Variables)
+   ============================================ */
+:root {
+  --action-blue: #0055FF;
+  --action-hover: #0041C8;
+  --soft-blue: #EFF6FF;
+  --light-bg: #F8FAFC;
+  --card-white: #FFFFFF;
+  --border-slate: #E2E8F0;
+  --text-main: #0F172A;
+  --text-sub: #64748B;
+  --court-gold: #D97706;
+  --live-red: #EF4444;
+  --shadow-app: 0 4px 20px -2px rgba(0, 85, 255, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 10px 25px -5px rgba(0, 85, 255, 0.15);
 }
 
-.font-mono { 
-  font-family: 'JetBrains Mono', monospace; 
+/* ============================================
+   Animations
+   ============================================ */
+@keyframes fadeIn {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: #F4F7FA;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #0055FF;
-}
-
-/* Label with monospace styling */
-.label-caps {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #64748B;
-}
-
-/* Pulsate animation for live indicator */
-.pulsate-live {
-  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+@keyframes slideUp {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes pulse {
-  0%, 100% { 
-    opacity: 1; 
-    transform: scale(1); 
-  }
-  50% { 
-    opacity: 0.4; 
-    transform: scale(1.08); 
-  }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.95); }
 }
-
-/* Tab button styling */
-.tab-btn {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.tab-btn-active {
-  background-color: #0055FF !important;
-  color: #FFFFFF !important;
-  box-shadow: 0px 4px 14px rgba(0, 85, 255, 0.3) !important;
-  border-color: #0055FF !important;
-}
-
-/* =====================================================
-   TAILWIND CUSTOM COLOR PALETTE
-   ===================================================== */
-
-/* Color Classes (Tailwind extends) */
-.text-action-blue { color: #0055FF; }
-.bg-action-blue { background-color: #0055FF; }
-.border-action-blue { border-color: #0055FF; }
-
-.text-primary-dark { color: #0041C8; }
-.bg-primary-dark { background-color: #0041C8; }
-
-.text-data-cyan { color: #00C2FF; }
-
-.bg-stadium-gray { background-color: #F4F7FA; }
-
-.text-stat-black { color: #0A0B0D; }
-
-.text-neutral-muted { color: #64748B; }
-
-.border-border-light { border-color: #E2E8F0; }
-
-/* =====================================================
-   SHADOW UTILITIES
-   ===================================================== */
-
-.shadow-floating {
-  box-shadow: 0px 10px 30px rgba(0, 85, 255, 0.12);
-}
-
-.shadow-card {
-  box-shadow: 0px 4px 15px rgba(10, 11, 13, 0.04);
-}
-
-.shadow-tab-active {
-  box-shadow: 0px 4px 14px rgba(0, 85, 255, 0.3);
-}
-
-/* =====================================================
-   FONT FAMILIES (Extends)
-   ===================================================== */
-
-.font-sora {
-  font-family: 'Sora', sans-serif;
-}
-
-.font-inter {
-  font-family: 'Inter', sans-serif;
-}
-
-.font-mono {
-  font-family: 'JetBrains Mono', monospace;
-}
-
-/* =====================================================
-   UTILITY CLASSES
-   ===================================================== */
-
-/* Hide scrollbar while keeping functionality */
-.scrollbar-none {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-none::-webkit-scrollbar {
-  display: none;
-}
-
-/* Text selection styling */
-::selection {
-  background-color: #0055FF;
-  color: #FFFFFF;
-}
-
-/* =====================================================
-   RESPONSIVE UTILITY OVERRIDES
-   ===================================================== */
-
-/* Ensure proper flex behavior */
-.flex-col { display: flex; flex-direction: column; }
-.flex-row { display: flex; flex-direction: row; }
-.flex { display: flex; }
-.items-center { align-items: center; }
-.justify-between { justify-content: space-between; }
-.justify-center { justify-content: center; }
-.gap-2 { gap: 0.5rem; }
-.gap-2\.5 { gap: 0.625rem; }
-.gap-3 { gap: 0.75rem; }
-
-/* Padding utilities */
-.px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
-.px-3\.5 { padding-left: 0.875rem; padding-right: 0.875rem; }
-.px-4 { padding-left: 1rem; padding-right: 1rem; }
-.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-.py-0\.5 { padding-top: 0.125rem; padding-bottom: 0.125rem; }
-
-/* Margin utilities */
-.mx-auto { margin-left: auto; margin-right: auto; }
-.ml-1 { margin-left: 0.25rem; }
-.mr-2 { margin-right: 0.5rem; }
-.mb-2\.5 { margin-bottom: 0.625rem; }
-
-/* Sizing */
-.w-full { width: 100%; }
-.h-full { height: 100%; }
-.min-h-screen { min-height: 100vh; }
-.w-10 { width: 2.5rem; }
-.h-10 { height: 2.5rem; }
-.w-2\.5 { width: 0.625rem; }
-.h-2\.5 { height: 0.625rem; }
-
-/* Border utilities */
-.border { border-width: 1px; }
-.border-b { border-bottom-width: 1px; }
-.border-t { border-top-width: 1px; }
-.rounded { border-radius: 0.25rem; }
-.rounded-full { border-radius: 9999px; }
-.rounded-xl { border-radius: 0.75rem; }
-.overflow-hidden { overflow: hidden; }
-
-/* Background & opacity */
-.bg-white { background-color: #FFFFFF; }
-.bg-blue-50 { background-color: #EFF6FF; }
-.opacity-60 { opacity: 0.6; }
-
-/* Display utilities */
-.hidden { display: none; }
-.block { display: block; }
-.inline { display: inline; }
-.inline-block { display: inline-block; }
-
-/* Typography */
-.text-xs { font-size: 0.75rem; }
-.text-sm { font-size: 0.875rem; }
-.text-base { font-size: 1rem; }
-.text-lg { font-size: 1.125rem; }
-.text-xl { font-size: 1.25rem; }
-
-.font-normal { font-weight: 400; }
-.font-semibold { font-weight: 600; }
-.font-bold { font-weight: 700; }
-.font-extrabold { font-weight: 800; }
-
-.leading-relaxed { line-height: 1.625; }
-.whitespace-nowrap { white-space: nowrap; }
-.whitespace-pre-line { white-space: pre-line; }
-
-.tracking-tight { letter-spacing: -0.015em; }
-.tracking-wider { letter-spacing: 0.05em; }
-.tracking-widest { letter-spacing: 0.1em; }
-
-.text-center { text-align: center; }
-
-/* Positioning */
-.relative { position: relative; }
-.absolute { position: absolute; }
-.sticky { position: sticky; }
-.top-0 { top: 0; }
-.z-40 { z-index: 40; }
-.z-50 { z-index: 50; }
-
-/* Flex utilities */
-.flex-1 { flex: 1 1 0%; }
-.flex-shrink-0 { flex-shrink: 0; }
-.shrink-0 { flex-shrink: 0; }
-.flex-wrap { flex-wrap: wrap; }
-
-/* Cursor */
-.cursor-pointer { cursor: pointer; }
-
-/* Transitions */
-.transition { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
-
-/* Hover states */
-.hover\:bg-blue-50\/60:hover { background-color: rgba(239, 246, 255, 0.6); }
-.hover\:border-action-blue:hover { border-color: #0055FF; }
-.hover\:text-action-blue:hover { color: #0055FF; }
-
-/* =====================================================
-   MEDIA QUERIES
-   ===================================================== */
-
-@media (max-width: 640px) {
-  .hidden.sm\:inline { display: none; }
-  .sm\:inline { display: inline; }
-  .sm\:px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
-}
-
-@media (min-width: 641px) {
-  .hidden.sm\:inline { display: inline; }
-}
-
-@media (min-width: 1024px) {
-  .lg\:px-8 { padding-left: 2rem; padding-right: 2rem; }
-}
-
-/* =====================================================
-   ANIMATIONS
-   ===================================================== */
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.fa-spin {
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* ============================================
+   Animation Classes
+   ============================================ */
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.animate-spin {
   animation: spin 1s linear infinite;
 }
 
-/* =====================================================
-   PRINT STYLES
-   ===================================================== */
+.animate-bounce {
+  animation: bounce 1s ease-in-out infinite;
+}
 
-@media print {
+/* ============================================
+   Base Styles
+   ============================================ */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--light-bg);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  max-width: 430px;
+  margin: 0 auto;
+  padding-bottom: 6rem;
+}
+
+@media (min-width: 1024px) {
   body {
-    background-color: white;
+    padding-bottom: 2rem;
   }
+}
+
+/* ============================================
+   Font Families
+   ============================================ */
+.font-display {
+  font-family: 'Sora', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+/* ============================================
+   Selection Style
+   ============================================ */
+::selection {
+  background-color: var(--action-blue);
+  color: white;
+}
+
+::-moz-selection {
+  background-color: var(--action-blue);
+  color: white;
+}
+
+/* ============================================
+   Scrollbar Customization
+   ============================================ */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--action-blue) #F1F5F9;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #F1F5F9;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--action-blue);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--action-hover);
+}
+
+/* ============================================
+   App Card
+   ============================================ */
+.app-card {
+  background-color: var(--card-white);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: var(--shadow-app);
+  border-radius: 16px;
+  transition: all 0.2s ease;
+}
+
+.app-card:hover {
+  border-color: rgba(0, 85, 255, 0.3);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* ============================================
+   Tab Buttons
+   ============================================ */
+.tab-btn-active {
+  background-color: var(--action-blue) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(0, 85, 255, 0.2) !important;
+  font-weight: 700 !important;
+}
+
+.tab-btn-active i {
+  color: white !important;
+}
+
+/* ============================================
+   Mobile Navigation
+   ============================================ */
+.mobile-nav-item {
+  transition: all 0.2s ease;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+
+.mobile-nav-item.active {
+  color: var(--action-blue);
+  font-weight: 700;
+  transform: scale(1.05);
+}
+
+.mobile-nav-item.active i {
+  color: var(--action-blue);
+}
+
+.mobile-nav-item:hover:not(.active) {
+  color: var(--text-main);
+}
+
+/* ============================================
+   Live Badge Variants
+   ============================================ */
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.live-badge--live {
+  background-color: #FEE2E2;
+  color: var(--live-red);
+  border: 1px solid #FCA5A5;
+}
+
+.live-badge--live .dot {
+  background-color: var(--live-red);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.live-badge--final {
+  background-color: #F1F5F9;
+  color: #64748B;
+  border: 1px solid #E2E8F0;
+}
+
+.live-badge--scheduled {
+  background-color: var(--soft-blue);
+  color: var(--action-blue);
+  border: 1px solid rgba(0, 85, 255, 0.2);
+}
+
+/* ============================================
+   QRIS Modal Styles
+   ============================================ */
+.qris-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.375rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.5rem;
+  background-color: white;
+  border-radius: 0.5rem;
+}
+
+.qris-grid-cell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  background-color: #0F172A;
+}
+
+.qris-grid-cell--empty {
+  background-color: #E2E8F0;
+}
+
+.qris-grid-cell--blue {
+  background-color: var(--action-blue);
+}
+
+/* ============================================
+   Admin Panel Styles
+   ============================================ */
+.admin-stat-card {
+  border-left-width: 4px;
+}
+
+.admin-stat-card--blue {
+  border-left-color: var(--action-blue);
+}
+
+.admin-stat-card--gold {
+  border-left-color: var(--court-gold);
+}
+
+.admin-stat-card--emerald {
+  border-left-color: #10B981;
+}
+
+.admin-stat-card--purple {
+  border-left-color: #8B5CF6;
+}
+
+/* ============================================
+   News Card Styles
+   ============================================ */
+.news-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.news-card .news-image {
+  width: 100%;
+  height: 10rem;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+}
+
+.news-card .news-image-placeholder {
+  width: 100%;
+  height: 10rem;
+  background: linear-gradient(to bottom right, #E2E8F0, #F1F5F9);
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+@media (max-width: 640px) {
+  .app-card {
+    border-radius: 12px;
+    padding: 0.75rem;
+  }
+  
+  .mobile-nav-item {
+    font-size: 0.625rem;
+  }
+  
+  .mobile-nav-item i {
+    font-size: 1.125rem;
+  }
+  
+  .tab-btn-active {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.7rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .app-card {
+    padding: 1.25rem;
+  }
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background-color: white !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+  
+  .app-card {
+    box-shadow: none !important;
+    border: 1px solid #E2E8F0 !important;
+  }
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.shrink-0 {
+  flex-shrink: 0;
+}
+
+/* ============================================
+   Dark Mode Support (Optional)
+   ============================================ */
+@media (prefers-color-scheme: dark) {
+  .light {
+    /* Keep light mode as default */
+  }
+}
+
+/* ============================================
+   Smooth Transitions for Theme Toggle
+   ============================================ */
+.theme-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
