@@ -3,33 +3,28 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>GaneMaX Score - Basketball Live & AI Analytics</title>
+  <title>GaneMaX Score - Basketball Live & AI</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
   <!-- Supabase JS Client CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+  
   <!-- External Styles -->
   <link rel="stylesheet" href="styles.css">
   
-  <!-- External Config & App -->
+  <!-- CONFIG & APP (Module) -->
   <script type="module" src="config.js"></script>
   <script type="module" src="app.js"></script>
 </head>
+<body class="bg-light-bg text-text-main font-sans min-h-screen pb-24 lg:pb-8 antialiased" style="max-width:430px;margin:0 auto;">
 
-<body class="bg-light-bg text-text-main font-sans min-h-screen pb-24 lg:pb-8 antialiased">
-
-  <!-- ===== TOP HEADER ===== -->
+  <!-- ===== HEADER ===== -->
   <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-border-slate shadow-sm">
     <div class="mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-3">
       <div class="flex items-center gap-2.5 cursor-pointer shrink-0 active:scale-95 transition-transform" onclick="window.switchTab('scores')">
@@ -37,21 +32,14 @@
           <img src="logo.jpg" alt="GaneMaX Logo" class="w-full h-full object-cover" onerror="this.outerHTML='<i class=\'fa-solid fa-basketball text-white text-xl animate-bounce\'></i>';">
         </div>
         <div class="flex flex-col">
-          <div class="flex items-center gap-1.5">
-            <span class="font-display font-extrabold text-lg sm:text-xl tracking-tight text-text-main">
-              GaneMaX <span class="text-action-blue">Score</span>
-            </span>
-            <span class="px-1.5 py-0.5 text-[9px] font-mono font-bold bg-soft-blue text-action-blue rounded border border-action-blue/20">PRO</span>
-          </div>
+          <span class="font-display font-extrabold text-lg sm:text-xl tracking-tight text-text-main">GaneMaX <span class="text-action-blue">Score</span></span>
           <p class="text-[10px] text-action-blue font-semibold tracking-wide">Basketball Live</p>
         </div>
       </div>
-
       <div class="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs font-semibold shrink-0">
         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
         <span id="live-status-header-text">GaneMaX Engine: Live Sync</span>
       </div>
-
       <div class="flex items-center gap-2 shrink-0">
         <button onclick="window.refreshCurrentLeagueData(true)" class="p-2.5 text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-text-sub hover:text-action-blue transition-all active:scale-90">
           <i class="fa-solid fa-arrows-rotate text-action-blue" id="api-refresh-icon"></i>
@@ -71,37 +59,17 @@
     <div class="mx-auto px-3 sm:px-4">
       <div class="flex items-center justify-between overflow-x-auto custom-scrollbar py-2 gap-2 text-xs font-semibold">
         <div class="flex items-center gap-1.5 sm:gap-2">
-          <button id="nav-scores" onclick="window.switchTab('scores')" class="tab-btn-active px-3.5 py-2 rounded-xl border border-transparent transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap shrink-0">
-            <i class="fa-solid fa-circle-dot text-live-red"></i> Live Score
-          </button>
-          <button id="nav-schedule" onclick="window.switchTab('schedule')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0">
-            <i class="fa-regular fa-calendar-days text-action-blue"></i> Jadwal Match
-          </button>
-          <button id="nav-standings" onclick="window.switchTab('standings')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0">
-            <i class="fa-solid fa-list-ol text-court-gold"></i> Klasemen
-          </button>
-          <button id="nav-news" onclick="window.switchTab('news')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0">
-            <i class="fa-regular fa-newspaper text-action-blue"></i> Berita Utama
-          </button>
-          <button id="nav-teams" onclick="window.switchTab('teams')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0">
-            <i class="fa-solid fa-shield-halved text-purple-600"></i> Tim & Roster
-          </button>
-          <button id="nav-ai" onclick="window.switchTab('ai')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-action-blue/30 bg-soft-blue shrink-0">
-            <i class="fa-solid fa-brain text-action-blue"></i> GaneMaX.ai
-          </button>
-          <button id="nav-injuries" onclick="window.switchTab('injuries')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0">
-            <i class="fa-solid fa-user-nurse text-rose-500"></i> Cedera
-          </button>
-          <button id="nav-transactions" onclick="window.switchTab('transactions')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0">
-            <i class="fa-solid fa-arrow-right-arrow-left text-amber-500"></i> Transfer
-          </button>
-          <button id="nav-admin" onclick="window.switchTab('admin')" class="hidden px-3.5 py-2 rounded-xl text-amber-700 bg-amber-50 border border-amber-200 font-bold hover:bg-amber-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap shrink-0">
-            <i class="fa-solid fa-user-shield"></i> Admin Panel
-          </button>
+          <button id="nav-scores" onclick="window.switchTab('scores')" class="tab-btn-active px-3.5 py-2 rounded-xl border border-transparent transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap shrink-0"><i class="fa-solid fa-circle-dot text-live-red"></i> Live Score</button>
+          <button id="nav-schedule" onclick="window.switchTab('schedule')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0"><i class="fa-regular fa-calendar-days text-action-blue"></i> Jadwal</button>
+          <button id="nav-standings" onclick="window.switchTab('standings')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0"><i class="fa-solid fa-list-ol text-court-gold"></i> Klasemen</button>
+          <button id="nav-news" onclick="window.switchTab('news')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0"><i class="fa-regular fa-newspaper text-action-blue"></i> Berita</button>
+          <button id="nav-teams" onclick="window.switchTab('teams')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0"><i class="fa-solid fa-shield-halved text-purple-600"></i> Tim</button>
+          <button id="nav-ai" onclick="window.switchTab('ai')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-action-blue/30 bg-soft-blue shrink-0"><i class="fa-solid fa-brain text-action-blue"></i> AI</button>
+          <button id="nav-injuries" onclick="window.switchTab('injuries')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0"><i class="fa-solid fa-user-nurse text-rose-500"></i> Cedera</button>
+          <button id="nav-transactions" onclick="window.switchTab('transactions')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0"><i class="fa-solid fa-arrow-right-arrow-left text-amber-500"></i> Transfer</button>
+          <button id="nav-admin" onclick="window.switchTab('admin')" class="hidden px-3.5 py-2 rounded-xl text-amber-700 bg-amber-50 border border-amber-200 font-bold hover:bg-amber-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap shrink-0"><i class="fa-solid fa-user-shield"></i> Admin</button>
         </div>
-        <button onclick="window.openQrisModal()" class="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-court-gold to-amber-500 text-white font-bold text-xs hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0">
-          <i class="fa-solid fa-crown text-white"></i> VIP Pro Pass
-        </button>
+        <button onclick="window.openQrisModal()" class="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-court-gold to-amber-500 text-white font-bold text-xs hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0"><i class="fa-solid fa-crown"></i> VIP Pro</button>
       </div>
     </div>
   </nav>
@@ -109,35 +77,29 @@
   <!-- ===== TICKER ===== -->
   <section id="games-ticker-section" class="bg-slate-900 text-white py-2.5 px-3 border-b border-slate-800 animate-fade-in">
     <div class="mx-auto flex items-center gap-4">
-      <div class="text-[11px] font-mono font-bold text-action-blue uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 shrink-0" id="ticker-league-label">
-        <i class="fa-solid fa-bolt text-court-gold animate-pulse"></i> NBA LIVE TICKER
-      </div>
+      <div class="text-[11px] font-mono font-bold text-action-blue uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 shrink-0" id="ticker-league-label"><i class="fa-solid fa-bolt text-court-gold animate-pulse"></i> NBA LIVE TICKER</div>
       <div class="flex items-center gap-3 overflow-x-auto custom-scrollbar py-1 text-xs" id="espn-ticker-container"></div>
     </div>
   </section>
 
-  <!-- ===== HERO SCOREBOARD ===== -->
+  <!-- ===== HERO ===== -->
   <div id="scoreboard-hero" class="mx-auto px-3 sm:px-4 mt-3 sm:mt-4 animate-fade-in">
     <div class="app-card rounded-2xl overflow-hidden p-3 sm:p-4 relative border-action-blue/30 bg-gradient-to-br from-white via-slate-50 to-blue-50/50" id="hero-card-content"></div>
   </div>
 
-  <!-- ===== MAIN CONTENT ===== -->
+  <!-- ===== MAIN ===== -->
   <main class="mx-auto px-3 sm:px-4 py-4 sm:py-5">
+
     <!-- TAB SCORES -->
     <div id="tab-scores" class="space-y-5 animate-fade-in">
       <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
         <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar text-xs font-medium">
-          <button onclick="window.filterMatchCategory('all')" id="btn-filter-all" class="px-3.5 py-1.5 rounded-xl bg-action-blue text-white font-bold transition-all active:scale-95">Semua Match</button>
-          <button onclick="window.filterMatchCategory('in')" id="btn-filter-in" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-text-sub hover:text-text-main flex items-center gap-1.5 transition-all active:scale-95">
-            <span class="w-2 h-2 rounded-full bg-live-red animate-pulse"></span> Live Now
-          </button>
+          <button onclick="window.filterMatchCategory('all')" id="btn-filter-all" class="px-3.5 py-1.5 rounded-xl bg-action-blue text-white font-bold transition-all active:scale-95">Semua</button>
+          <button onclick="window.filterMatchCategory('in')" id="btn-filter-in" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-text-sub hover:text-text-main flex items-center gap-1.5 transition-all active:scale-95"><span class="w-2 h-2 rounded-full bg-live-red animate-pulse"></span> Live</button>
           <button onclick="window.filterMatchCategory('post')" id="btn-filter-post" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-text-sub hover:text-text-main transition-all active:scale-95">Selesai</button>
           <button onclick="window.filterMatchCategory('pre')" id="btn-filter-pre" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-text-sub hover:text-text-main transition-all active:scale-95">Akan Datang</button>
         </div>
-        <div class="text-xs text-text-sub font-mono flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span id="active-league-badge-text" class="font-bold text-action-blue">GaneMaX Live: NBA</span>
-        </div>
+        <div class="text-xs text-text-sub font-mono flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span id="active-league-badge-text" class="font-bold text-action-blue">GaneMaX Live: NBA</span></div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="match-cards-container"></div>
     </div>
@@ -146,12 +108,7 @@
     <div id="tab-schedule" class="hidden space-y-5 animate-fade-in">
       <div class="app-card p-4 sm:p-6 space-y-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-slate-200">
-          <div>
-            <h3 class="font-display font-bold text-lg flex items-center gap-2 text-text-main">
-              <i class="fa-regular fa-calendar-days text-action-blue"></i> Jadwal Pertandingan
-            </h3>
-            <p class="text-xs text-text-sub" id="schedule-league-subtitle">Jadwal resmi liga pilihan Anda.</p>
-          </div>
+          <div><h3 class="font-display font-bold text-lg flex items-center gap-2 text-text-main"><i class="fa-regular fa-calendar-days text-action-blue"></i> Jadwal Pertandingan</h3><p class="text-xs text-text-sub" id="schedule-league-subtitle">Jadwal resmi liga pilihan Anda.</p></div>
           <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar w-full sm:w-auto">
             <button onclick="window.setScheduleDate('yesterday')" id="sched-date-yesterday" class="px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all whitespace-nowrap">Kemarin</button>
             <button onclick="window.setScheduleDate('today')" id="sched-date-today" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-action-blue text-white shadow-sm active:scale-95 transition-all whitespace-nowrap">Hari Ini</button>
@@ -168,17 +125,10 @@
     <div id="tab-standings" class="hidden space-y-5 animate-fade-in">
       <div class="app-card p-4 sm:p-6 space-y-5">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 pb-4">
-          <div>
-            <h3 class="font-display font-bold text-lg text-text-main" id="standings-title-text">Klasemen Season Realtime</h3>
-            <p class="text-xs text-text-sub">Peringkat resmi seluruh tim & statistik kemenangan.</p>
-          </div>
+          <div><h3 class="font-display font-bold text-lg text-text-main" id="standings-title-text">Klasemen Season Realtime</h3><p class="text-xs text-text-sub">Peringkat resmi seluruh tim & statistik kemenangan.</p></div>
           <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto">
-            <button onclick="window.setStandingsViewMode('overall')" id="btn-standings-overall" class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold bg-action-blue text-white shadow-sm transition-all active:scale-95">
-              <i class="fa-solid fa-globe me-1"></i> Overall
-            </button>
-            <button onclick="window.setStandingsViewMode('divided')" id="btn-standings-divided" class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-medium text-text-sub hover:text-text-main transition-all active:scale-95">
-              <i class="fa-solid fa-layer-group me-1"></i> Per Konferensi
-            </button>
+            <button onclick="window.setStandingsViewMode('overall')" id="btn-standings-overall" class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold bg-action-blue text-white shadow-sm transition-all active:scale-95"><i class="fa-solid fa-globe me-1"></i> Overall</button>
+            <button onclick="window.setStandingsViewMode('divided')" id="btn-standings-divided" class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-medium text-text-sub hover:text-text-main transition-all active:scale-95"><i class="fa-solid fa-layer-group me-1"></i> Per Konferensi</button>
           </div>
         </div>
         <div id="standings-sections-container" class="space-y-6"></div>
@@ -188,15 +138,8 @@
     <!-- TAB NEWS -->
     <div id="tab-news" class="hidden space-y-5 animate-fade-in">
       <div class="flex justify-between items-center">
-        <div>
-          <h3 class="font-display font-bold text-lg flex items-center gap-2 text-text-main">
-            <i class="fa-regular fa-newspaper text-action-blue"></i> Berita & Headline
-          </h3>
-          <p class="text-xs text-text-sub">Laporan resmi jurnalis seputar tim dan pemain.</p>
-        </div>
-        <button onclick="window.fetchEspnNews()" class="px-3.5 py-1.5 text-xs bg-action-blue text-white rounded-xl font-bold hover:bg-action-hover active:scale-95 transition-all shadow-sm">
-          <i class="fa-solid fa-rotate me-1"></i> Refresh
-        </button>
+        <div><h3 class="font-display font-bold text-lg flex items-center gap-2 text-text-main"><i class="fa-regular fa-newspaper text-action-blue"></i> Berita & Headline</h3><p class="text-xs text-text-sub">Laporan resmi jurnalis seputar tim dan pemain.</p></div>
+        <button onclick="window.fetchEspnNews()" class="px-3.5 py-1.5 text-xs bg-action-blue text-white rounded-xl font-bold hover:bg-action-hover active:scale-95 transition-all shadow-sm"><i class="fa-solid fa-rotate me-1"></i> Refresh</button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="espn-news-container"></div>
     </div>
@@ -204,15 +147,8 @@
     <!-- TAB TEAMS -->
     <div id="tab-teams" class="hidden space-y-5 animate-fade-in">
       <div class="flex justify-between items-center">
-        <div>
-          <h3 class="font-display font-bold text-lg flex items-center gap-2">
-            <i class="fa-solid fa-shield-halved text-purple-600"></i> Tim & Roster
-          </h3>
-          <p class="text-xs text-text-sub">Inspeksi roster pemain resmi tiap klub.</p>
-        </div>
-        <button onclick="window.fetchEspnTeams()" class="px-3.5 py-1.5 text-xs bg-purple-600 text-white rounded-xl font-bold active:scale-95 transition-all shadow-sm">
-          <i class="fa-solid fa-rotate me-1"></i> Sync Teams
-        </button>
+        <div><h3 class="font-display font-bold text-lg flex items-center gap-2"><i class="fa-solid fa-shield-halved text-purple-600"></i> Tim & Roster</h3><p class="text-xs text-text-sub">Inspeksi roster pemain resmi tiap klub.</p></div>
+        <button onclick="window.fetchEspnTeams()" class="px-3.5 py-1.5 text-xs bg-purple-600 text-white rounded-xl font-bold active:scale-95 transition-all shadow-sm"><i class="fa-solid fa-rotate me-1"></i> Sync Teams</button>
       </div>
       <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" id="espn-teams-container"></div>
     </div>
@@ -222,18 +158,8 @@
       <div id="ai-paywall-overlay" class="hidden app-card overflow-hidden">
         <div class="bg-gradient-to-r from-action-blue via-action-blue/80 to-slate-700 px-6 sm:px-8 py-8 text-white relative">
           <div class="relative space-y-4">
-            <div class="flex items-center gap-3">
-              <div class="w-14 h-14 rounded-2xl bg-white/10 border-2 border-white/30 flex items-center justify-center text-2xl backdrop-blur-sm">
-                <i class="fa-solid fa-brain"></i>
-              </div>
-              <div>
-                <h2 class="font-display font-extrabold text-2xl">GaneMaX.ai Pro</h2>
-                <p class="text-sm text-white/80 font-medium">AI Basketball Intelligence</p>
-              </div>
-            </div>
-            <p class="text-sm text-white/90 max-w-xl leading-relaxed">
-              Dapatkan analisis REAL-TIME dengan AI terdepan. Prediksi skor akurat, win rate analysis, key matchups.
-            </p>
+            <div class="flex items-center gap-3"><div class="w-14 h-14 rounded-2xl bg-white/10 border-2 border-white/30 flex items-center justify-center text-2xl backdrop-blur-sm"><i class="fa-solid fa-brain"></i></div><div><h2 class="font-display font-extrabold text-2xl">GaneMaX.ai Pro</h2><p class="text-sm text-white/80 font-medium">AI Basketball Intelligence</p></div></div>
+            <p class="text-sm text-white/90 max-w-xl leading-relaxed">Dapatkan analisis REAL-TIME dengan AI terdepan.</p>
           </div>
         </div>
         <div class="px-6 sm:px-8 py-6 bg-gradient-to-b from-white to-slate-50">
@@ -244,79 +170,29 @@
             <div class="space-y-2"><div class="text-2xl">⭐</div><p class="text-[11px] font-semibold">Fantasy Picks</p></div>
           </div>
           <div class="space-y-3 mb-6">
-            <div onclick="window.openQrisModalWithPlan(49000, '1 Bulan VIP Pro')" class="group cursor-pointer">
-              <div class="p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-action-blue hover:shadow-lg transition-all active:scale-95">
-                <div class="flex items-start justify-between mb-3">
-                  <div><p class="text-xs font-bold text-text-sub uppercase">Bulanan</p><h4 class="font-bold text-base mt-1">1 Bulan VIP Pro</h4></div>
-                  <div class="text-right"><p class="text-xs text-text-sub">Per Bulan</p><p class="text-lg font-mono font-extrabold text-action-blue">Rp 49K</p></div>
-                </div>
-                <button class="w-full py-2 bg-slate-100 hover:bg-action-blue hover:text-white text-action-blue rounded-xl font-bold text-xs transition-all">Pilih Paket</button>
-              </div>
-            </div>
-            <div onclick="window.openQrisModalWithPlan(99000, '2 Bulan VIP Pro')" class="group cursor-pointer relative">
-              <div class="absolute -top-2 -right-2 px-3 py-1 bg-gradient-to-r from-action-blue to-court-gold text-white rounded-full text-[10px] font-bold shadow-lg">⭐ HEMAT 17%</div>
-              <div class="p-4 rounded-2xl border-2 border-action-blue bg-gradient-to-br from-soft-blue to-white hover:shadow-xl transition-all active:scale-95 ring-2 ring-action-blue/20">
-                <div class="flex items-start justify-between mb-3">
-                  <div><p class="text-xs font-bold text-action-blue uppercase">✨ Populer</p><h4 class="font-bold text-base mt-1">2 Bulan VIP Pro</h4></div>
-                  <div class="text-right"><p class="text-xs text-text-sub">Hemat</p><p class="text-lg font-mono font-extrabold text-action-blue">Rp 99K</p></div>
-                </div>
-                <button class="w-full py-2 bg-gradient-to-r from-action-blue to-action-blue/80 text-white rounded-xl font-bold text-xs transition-all shadow-md">Paling Populer</button>
-              </div>
-            </div>
-            <div onclick="window.openQrisModalWithPlan(559000, '1 Tahun VIP Pro')" class="group cursor-pointer relative">
-              <div class="absolute -top-2 -right-2 px-3 py-1 bg-gradient-to-r from-court-gold to-amber-600 text-white rounded-full text-[10px] font-bold shadow-lg">👑 HEMAT 60%</div>
-              <div class="p-4 rounded-2xl border-2 border-court-gold/50 bg-gradient-to-br from-amber-50/50 to-white hover:shadow-xl hover:border-court-gold transition-all active:scale-95">
-                <div class="flex items-start justify-between mb-3">
-                  <div><p class="text-xs font-bold text-court-gold uppercase">🏆 Super Value</p><h4 class="font-bold text-base mt-1">1 Tahun VIP Pro</h4></div>
-                  <div class="text-right"><p class="text-xs text-text-sub">Terbaik</p><p class="text-lg font-mono font-extrabold text-court-gold">Rp 559K</p></div>
-                </div>
-                <button class="w-full py-2 bg-gradient-to-r from-court-gold to-amber-600 text-white rounded-xl font-bold text-xs transition-all shadow-md">Upgrade Premium</button>
-              </div>
-            </div>
+            <div onclick="window.openQrisModalWithPlan(49000,'1 Bulan VIP Pro')" class="group cursor-pointer"><div class="p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-action-blue hover:shadow-lg transition-all active:scale-95"><div class="flex items-start justify-between mb-3"><div><p class="text-xs font-bold text-text-sub uppercase">Bulanan</p><h4 class="font-bold text-base mt-1">1 Bulan VIP Pro</h4></div><div class="text-right"><p class="text-xs text-text-sub">Per Bulan</p><p class="text-lg font-mono font-extrabold text-action-blue">Rp 49K</p></div></div><button class="w-full py-2 bg-slate-100 hover:bg-action-blue hover:text-white text-action-blue rounded-xl font-bold text-xs transition-all">Pilih</button></div></div>
+            <div onclick="window.openQrisModalWithPlan(99000,'2 Bulan VIP Pro')" class="group cursor-pointer relative"><div class="absolute -top-2 -right-2 px-3 py-1 bg-gradient-to-r from-action-blue to-court-gold text-white rounded-full text-[10px] font-bold shadow-lg">⭐ HEMAT 17%</div><div class="p-4 rounded-2xl border-2 border-action-blue bg-gradient-to-br from-soft-blue to-white hover:shadow-xl transition-all active:scale-95 ring-2 ring-action-blue/20"><div class="flex items-start justify-between mb-3"><div><p class="text-xs font-bold text-action-blue uppercase">✨ Populer</p><h4 class="font-bold text-base mt-1">2 Bulan VIP Pro</h4></div><div class="text-right"><p class="text-xs text-text-sub">Hemat</p><p class="text-lg font-mono font-extrabold text-action-blue">Rp 99K</p></div></div><button class="w-full py-2 bg-gradient-to-r from-action-blue to-action-blue/80 text-white rounded-xl font-bold text-xs transition-all shadow-md">Paling Populer</button></div></div>
+            <div onclick="window.openQrisModalWithPlan(559000,'1 Tahun VIP Pro')" class="group cursor-pointer relative"><div class="absolute -top-2 -right-2 px-3 py-1 bg-gradient-to-r from-court-gold to-amber-600 text-white rounded-full text-[10px] font-bold shadow-lg">👑 HEMAT 60%</div><div class="p-4 rounded-2xl border-2 border-court-gold/50 bg-gradient-to-br from-amber-50/50 to-white hover:shadow-xl hover:border-court-gold transition-all active:scale-95"><div class="flex items-start justify-between mb-3"><div><p class="text-xs font-bold text-court-gold uppercase">🏆 Super Value</p><h4 class="font-bold text-base mt-1">1 Tahun VIP Pro</h4></div><div class="text-right"><p class="text-xs text-text-sub">Terbaik</p><p class="text-lg font-mono font-extrabold text-court-gold">Rp 559K</p></div></div><button class="w-full py-2 bg-gradient-to-r from-court-gold to-amber-600 text-white rounded-xl font-bold text-xs transition-all shadow-md">Upgrade Premium</button></div></div>
           </div>
-          <div class="p-4 rounded-xl bg-blue-50 border border-action-blue/20 space-y-2">
-            <p class="text-xs font-semibold text-text-main flex items-center gap-2">
-              <i class="fa-solid fa-circle-check text-action-blue"></i> Proses Aktivasi Cepat
-            </p>
-            <p class="text-xs text-text-sub">Kirim bukti QRIS ke <strong>@mrpangeranz</strong> → Aktivasi 5-10 menit</p>
-          </div>
+          <div class="p-4 rounded-xl bg-blue-50 border border-action-blue/20 space-y-2"><p class="text-xs font-semibold text-text-main flex items-center gap-2"><i class="fa-solid fa-circle-check text-action-blue"></i> Proses Aktivasi Cepat</p><p class="text-xs text-text-sub">Kirim bukti QRIS ke <strong>@mrpangeranz</strong> → Aktivasi 5-10 menit</p></div>
         </div>
       </div>
       <div id="ai-unlocked-content" class="hidden app-card p-6 border-2 border-action-blue/40 bg-gradient-to-br from-white via-soft-blue/10 to-slate-50">
         <div class="flex items-center justify-between pb-4 mb-4 border-b-2 border-action-blue/20">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-action-blue to-action-blue/60 text-white flex items-center justify-center font-bold shadow-lg shadow-action-blue/30">
-              <i class="fa-solid fa-brain text-xl"></i>
-            </div>
-            <div><h2 class="font-display font-bold text-lg">GaneMaX.ai Intelligence</h2><p class="text-xs text-text-sub">Real-Time Basketball AI</p></div>
-          </div>
-          <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-100 to-emerald-50 border border-emerald-300">
-            <i class="fa-solid fa-circle text-emerald-500 text-[8px] animate-pulse"></i>
-            <span class="text-xs font-bold text-emerald-700">VIP Active</span>
-          </div>
+          <div class="flex items-center gap-3"><div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-action-blue to-action-blue/60 text-white flex items-center justify-center font-bold shadow-lg shadow-action-blue/30"><i class="fa-solid fa-brain text-xl"></i></div><div><h2 class="font-display font-bold text-lg">GaneMaX.ai Intelligence</h2><p class="text-xs text-text-sub">Real-Time Basketball AI</p></div></div>
+          <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-100 to-emerald-50 border border-emerald-300"><i class="fa-solid fa-circle text-emerald-500 text-[8px] animate-pulse"></i><span class="text-xs font-bold text-emerald-700">VIP Active</span></div>
         </div>
         <div class="grid grid-cols-4 gap-2 mb-4 pb-4 border-b border-slate-100">
-          <button onclick="window.setAiPrompt('Analisis Win Rate Lakers vs Warriors')" class="p-2 rounded-lg bg-slate-50 hover:bg-action-blue/5 active:scale-95 transition-all text-center space-y-1">
-            <div class="text-lg">🎯</div><p class="text-[9px] font-semibold">Win Rate</p>
-          </button>
-          <button onclick="window.setAiPrompt('Prediksi Total Poin Over/Under Boston Celtics')" class="p-2 rounded-lg bg-slate-50 hover:bg-action-blue/5 active:scale-95 transition-all text-center space-y-1">
-            <div class="text-lg">📊</div><p class="text-[9px] font-semibold">Over/Under</p>
-          </button>
-          <button onclick="window.setAiPrompt('Rekomendasi Pemain Fantasy Basketball')" class="p-2 rounded-lg bg-slate-50 hover:bg-action-blue/5 active:scale-95 transition-all text-center space-y-1">
-            <div class="text-lg">⭐</div><p class="text-[9px] font-semibold">Fantasy</p>
-          </button>
-          <button onclick="window.setAiPrompt('Analisis key matchups dan strategi taktis')" class="p-2 rounded-lg bg-slate-50 hover:bg-action-blue/5 active:scale-95 transition-all text-center space-y-1">
-            <div class="text-lg">🔍</div><p class="text-[9px] font-semibold">Matchups</p>
-          </button>
+          <button onclick="window.setAiPrompt('Analisis Win Rate Lakers vs Warriors')" class="p-2 rounded-lg bg-slate-50 hover:bg-action-blue/5 active:scale-95 transition-all text-center space-y-1"><div class="text-lg">🎯</div><p class="text-[9px] font-semibold">Win Rate</p></button>
+          <button onclick="window.setAiPrompt('Prediksi Total Poin Over/Under Boston Celtics')" class="p-2 rounded-lg bg-slate-50 hover:bg-action-blue/5 active:scale-95 transition-all text-center space-y-1"><div class="text-lg">📊</div><p class="text-[9px] font-semibold">Over/Under</p></button>
+          <button onclick="window.setAiPrompt('Rekomendasi Pemain Fantasy Basketball')" class="p-2 rounded-lg bg-slate-50 hover:bg-action-blue/5 active:scale-95 transition-all text-center space-y-1"><div class="text-lg">⭐</div><p class="text-[9px] font-semibold">Fantasy</p></button>
+          <button onclick="window.setAiPrompt('Analisis key matchups dan strategi taktis')" class="p-2 rounded-lg bg-slate-50 hover:bg-action-blue/5 active:scale-95 transition-all text-center space-y-1"><div class="text-lg">🔍</div><p class="text-[9px] font-semibold">Matchups</p></button>
         </div>
         <div class="space-y-3 mb-4">
           <label class="block text-xs font-bold text-text-main uppercase">Tanyakan Analisis AI:</label>
           <div class="flex gap-2">
-            <input type="text" id="ai-prompt-input" placeholder="Contoh: Analisis Lakers vs Warriors..." 
-              class="flex-1 px-4 py-2.5 text-xs rounded-xl bg-white border-2 border-slate-200 focus:border-action-blue focus:ring-2 focus:ring-action-blue/20 focus:outline-none transition-all">
-            <button onclick="window.runAiPrediction()" class="px-6 py-2.5 bg-gradient-to-r from-action-blue to-action-blue/80 hover:from-action-hover hover:to-action-hover/80 text-white rounded-xl font-bold text-xs flex items-center gap-2 active:scale-95 transition-all shadow-lg">
-              <i class="fa-solid fa-wand-magic-sparkles"></i> Analisis
-            </button>
+            <input type="text" id="ai-prompt-input" placeholder="Contoh: Analisis Lakers vs Warriors..." class="flex-1 px-4 py-2.5 text-xs rounded-xl bg-white border-2 border-slate-200 focus:border-action-blue focus:ring-2 focus:ring-action-blue/20 focus:outline-none transition-all">
+            <button onclick="window.runAiPrediction()" class="px-6 py-2.5 bg-gradient-to-r from-action-blue to-action-blue/80 hover:from-action-hover hover:to-action-hover/80 text-white rounded-xl font-bold text-xs flex items-center gap-2 active:scale-95 transition-all shadow-lg"><i class="fa-solid fa-wand-magic-sparkles"></i> Analisis</button>
           </div>
         </div>
         <div id="ai-response-box" class="hidden p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 border border-slate-700 text-xs font-mono space-y-2 leading-relaxed shadow-inner"></div>
@@ -326,11 +202,7 @@
     <!-- TAB INJURIES -->
     <div id="tab-injuries" class="hidden space-y-5 animate-fade-in">
       <div class="app-card p-4 sm:p-6 space-y-4">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-200">
-          <div><h3 class="font-display font-bold text-lg flex items-center gap-2 text-rose-500"><i class="fa-solid fa-user-nurse"></i> Laporan Cedera</h3>
-          <p class="text-xs text-text-sub">Daftar medis pemain yang absen.</p></div>
-          <button onclick="window.fetchEspnInjuries()" class="px-3.5 py-1.5 text-xs bg-rose-500 text-white rounded-xl font-bold active:scale-95 transition-all shadow-sm"><i class="fa-solid fa-rotate me-1"></i> Update</button>
-        </div>
+        <div class="flex justify-between items-center pb-3 border-b border-slate-200"><div><h3 class="font-display font-bold text-lg flex items-center gap-2 text-rose-500"><i class="fa-solid fa-user-nurse"></i> Laporan Cedera</h3><p class="text-xs text-text-sub">Daftar medis pemain yang absen.</p></div><button onclick="window.fetchEspnInjuries()" class="px-3.5 py-1.5 text-xs bg-rose-500 text-white rounded-xl font-bold active:scale-95 transition-all shadow-sm"><i class="fa-solid fa-rotate me-1"></i> Update</button></div>
         <div class="space-y-3" id="espn-injuries-container"></div>
       </div>
     </div>
@@ -338,11 +210,7 @@
     <!-- TAB TRANSACTIONS -->
     <div id="tab-transactions" class="hidden space-y-5 animate-fade-in">
       <div class="app-card p-4 sm:p-6 space-y-4">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-200">
-          <div><h3 class="font-display font-bold text-lg flex items-center gap-2 text-amber-600"><i class="fa-solid fa-arrow-right-arrow-left"></i> Transaksi & Trades</h3>
-          <p class="text-xs text-text-sub">Kabar penandatanganan kontrak dan pertukaran pemain.</p></div>
-          <button onclick="window.fetchEspnTransactions()" class="px-3.5 py-1.5 text-xs bg-amber-500 text-white rounded-xl font-bold active:scale-95 transition-all shadow-sm"><i class="fa-solid fa-rotate me-1"></i> Sync</button>
-        </div>
+        <div class="flex justify-between items-center pb-3 border-b border-slate-200"><div><h3 class="font-display font-bold text-lg flex items-center gap-2 text-amber-600"><i class="fa-solid fa-arrow-right-arrow-left"></i> Transaksi & Trades</h3><p class="text-xs text-text-sub">Kabar penandatanganan kontrak dan pertukaran pemain.</p></div><button onclick="window.fetchEspnTransactions()" class="px-3.5 py-1.5 text-xs bg-amber-500 text-white rounded-xl font-bold active:scale-95 transition-all shadow-sm"><i class="fa-solid fa-rotate me-1"></i> Sync</button></div>
         <div class="space-y-3" id="espn-transactions-container"></div>
       </div>
     </div>
@@ -350,14 +218,8 @@
     <!-- TAB ADMIN -->
     <div id="tab-admin" class="hidden space-y-5 animate-fade-in">
       <div class="bg-gradient-to-r from-slate-900 via-action-blue to-blue-900 text-white p-6 rounded-2xl shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <span class="px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-extrabold uppercase">SUPER ADMIN</span>
-          <h2 class="font-display font-extrabold text-2xl mt-1">GaneMaX Pro Control</h2>
-          <p class="text-xs font-medium opacity-80">Atur Masa Aktif VIP User & Akses AI Analytics.</p>
-        </div>
-        <button onclick="window.refreshAdminData()" class="px-4 py-2 bg-white text-action-blue rounded-xl font-bold text-xs hover:bg-slate-100 active:scale-95 transition-all shadow-md">
-          <i class="fa-solid fa-rotate me-1"></i> Sync DB
-        </button>
+        <div><span class="px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-extrabold uppercase">SUPER ADMIN</span><h2 class="font-display font-extrabold text-2xl mt-1">GaneMaX Pro Control</h2><p class="text-xs font-medium opacity-80">Atur Masa Aktif VIP User & Akses AI.</p></div>
+        <button onclick="window.refreshAdminData()" class="px-4 py-2 bg-white text-action-blue rounded-xl font-bold text-xs hover:bg-slate-100 active:scale-95 transition-all shadow-md"><i class="fa-solid fa-rotate me-1"></i> Sync DB</button>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div class="app-card p-4 border-l-4 border-action-blue"><p class="text-[11px] font-semibold text-text-sub">Total Pengguna</p><h4 class="text-2xl font-bold font-mono mt-1" id="admin-stat-users">1,482</h4></div>
@@ -366,15 +228,10 @@
         <div class="app-card p-4 border-l-4 border-purple-500"><p class="text-[11px] font-semibold text-text-sub">AI Engine</p><h4 class="text-2xl font-bold font-mono text-purple-600 mt-1">ONLINE</h4></div>
       </div>
       <div class="app-card p-5 space-y-4 overflow-hidden">
-        <div class="flex justify-between items-center">
-          <h3 class="font-display font-bold text-base flex items-center gap-2"><i class="fa-solid fa-users-gear text-action-blue"></i> Manajemen VIP</h3>
-          <span class="text-xs text-text-sub">Atur izin akses AI</span>
-        </div>
+        <div class="flex justify-between items-center"><h3 class="font-display font-bold text-base flex items-center gap-2"><i class="fa-solid fa-users-gear text-action-blue"></i> Manajemen VIP</h3><span class="text-xs text-text-sub">Atur izin akses AI</span></div>
         <div class="overflow-x-auto custom-scrollbar">
           <table class="w-full text-xs text-left">
-            <thead class="bg-slate-100 text-text-sub font-semibold uppercase">
-              <tr><th class="p-3">Pengguna / Email</th><th class="p-3">Role</th><th class="p-3">Status VIP</th><th class="p-3">Masa Aktif</th><th class="p-3">Aksi</th></tr>
-            </thead>
+            <thead class="bg-slate-100 text-text-sub font-semibold uppercase"><tr><th class="p-3">Pengguna / Email</th><th class="p-3">Role</th><th class="p-3">Status VIP</th><th class="p-3">Masa Aktif</th><th class="p-3">Aksi</th></tr></thead>
             <tbody id="admin-user-table-body" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
