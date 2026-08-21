@@ -1,8 +1,8 @@
 // ============================================
-// GaneMaX Basketball - MAIN APP (FIXED VERSION)
+// GaneMaX Basketball - Main Application Logic
 // ============================================
 
-// ===== 1. IMPORT CONFIG =====
+// Import all dependencies
 import {
   OPENROUTER_API_KEY,
   SUPABASE_URL,
@@ -11,18 +11,19 @@ import {
   LEAGUES_LIST,
   getEspnUrl,
   INITIAL_INSTANT_EVENTS,
-  getMockUsersDB,
-  setMockUsersDB,
-  updateMockUsersDB,
+  getMockUsers,
+  setMockUsers,
   getFormattedDateStr
 } from './config.js';
 
-// ===== 2. STATE =====
+// ============================================
+// STATE
+// ============================================
 let currentLeagueSlug = 'nba';
 let currentScheduleDateStr = getFormattedDateStr(new Date());
 let standingsViewMode = 'overall';
 let currentUser = JSON.parse(localStorage.getItem('ganemax_user_session')) || null;
-let globalEventsData = [];
+let globalEventsData = [...INITIAL_INSTANT_EVENTS];
 let rawStandingsData = null;
 let currentFilter = 'all';
 let selectedQrisAmount = 49000;
@@ -31,44 +32,40 @@ let apiRequestTimestamps = [];
 let tokensUsedToday = 0;
 let aiIsLoading = false;
 
-// ===== 3. HELPER FUNCTIONS =====
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
 function isUserVipActive(user) {
   if (!user) return false;
   if (user?.email?.toLowerCase() === 'taufiq.pagarnusa99@gmail.com' || user?.role === 'admin') return true;
   if (!user?.is_vip) return false;
   if (user?.vip_expires_at) {
-    const expDate = new Date(user.vip_expires_at);
-    const now = new Date();
-    return expDate >= now;
+    const exp = new Date(user.vip_expires_at);
+    return exp >= new Date();
   }
   return user?.is_vip || false;
 }
 
 function checkApiRateLimit() {
   const now = Date.now();
-  const oneMinuteAgo = now - 60000;
-  const oneHourAgo = now - 3600000;
-  apiRequestTimestamps = apiRequestTimestamps.filter(t => t > oneHourAgo);
-  const lastMinute = apiRequestTimestamps.filter(t => t > oneMinuteAgo).length;
-  if (lastMinute >= API_CONFIG.MAX_REQUESTS_PER_MINUTE) {
-    throw new Error(`❌ RATE LIMIT: Max ${API_CONFIG.MAX_REQUESTS_PER_MINUTE} requests per minute.`);
-  }
-  if (apiRequestTimestamps.length >= API_CONFIG.MAX_REQUESTS_PER_HOUR) {
-    throw new Error(`❌ RATE LIMIT: Max ${API_CONFIG.MAX_REQUESTS_PER_HOUR} requests per hour.`);
-  }
+  apiRequestTimestamps = apiRequestTimestamps.filter(t => t > now - 3600000);
+  if (apiRequestTimestamps.filter(t => t > now - 60000).length >= API_CONFIG.MAX_REQUESTS_PER_MINUTE)
+    throw new Error('Rate limit per minute');
+  if (apiRequestTimestamps.length >= API_CONFIG.MAX_REQUESTS_PER_HOUR)
+    throw new Error('Rate limit per hour');
   return true;
 }
 
-function recordApiRequest(tokensUsed = 0) {
+function recordApiRequest(t = 0) {
   apiRequestTimestamps.push(Date.now());
-  tokensUsedToday += tokensUsed;
+  tokensUsedToday += t;
   localStorage.setItem('ganemax_tokens_today', String(tokensUsedToday));
 }
 
 function resetDailyTokens() {
-  const lastReset = localStorage.getItem('ganemax_tokens_reset_date');
+  const last = localStorage.getItem('ganemax_tokens_reset_date');
   const today = new Date().toDateString();
-  if (lastReset !== today) {
+  if (last !== today) {
     tokensUsedToday = 0;
     localStorage.setItem('ganemax_tokens_reset_date', today);
     localStorage.setItem('ganemax_tokens_today', '0');
@@ -77,7 +74,9 @@ function resetDailyTokens() {
   }
 }
 
-// ===== 4. RENDER FUNCTIONS =====
+// ============================================
+// RENDER FUNCTIONS
+// ============================================
 function renderLeagueBadges() {
   const container = document.getElementById('league-badges-container');
   if (!container) return;
@@ -288,7 +287,9 @@ function updateAdminNavVisibility() {
   }
 }
 
-// ===== 5. CORE FUNCTIONS (EXPOSED TO WINDOW) =====
+// ============================================
+// CORE FUNCTIONS (exposed to window)
+// ============================================
 
 function switchTab(tabName) {
   console.log('switchTab called:', tabName);
@@ -326,6 +327,7 @@ function switchTab(tabName) {
     }
   }
 
+  // Tab-specific actions
   if (tabName === 'scores') fetchAllLeaguesScoreboard();
   if (tabName === 'ai') checkAiAccessPermission();
   if (tabName === 'schedule') fetchEspnSchedule(currentScheduleDateStr);
@@ -368,7 +370,9 @@ function filterMatchCategory(cat) {
   renderMatchCards(globalEventsData);
 }
 
-// ===== 6. FETCH FUNCTIONS =====
+// ============================================
+// FETCH FUNCTIONS
+// ============================================
 
 async function fetchAllLeaguesScoreboard() {
   const refreshIcon = document.getElementById('api-refresh-icon');
@@ -404,7 +408,6 @@ async function fetchAllLeaguesScoreboard() {
       renderHeroCard(globalEventsData[0]);
       renderMatchCards(globalEventsData);
     } else {
-      // Jika kosong, gunakan data awal
       if (globalEventsData.length === 0) {
         globalEventsData = INITIAL_INSTANT_EVENTS;
         renderTicker(globalEventsData);
@@ -419,7 +422,6 @@ async function fetchAllLeaguesScoreboard() {
     }
   } catch (error) {
     console.error('Error fetching all leagues:', error);
-    // Fallback ke data awal
     if (globalEventsData.length === 0) {
       globalEventsData = INITIAL_INSTANT_EVENTS;
       renderTicker(globalEventsData);
@@ -449,7 +451,6 @@ async function fetchEspnScoreboard(showSpinner = false) {
       renderHeroCard(globalEventsData[0]);
       renderMatchCards(globalEventsData);
     } else {
-      // Jika tidak ada event, gunakan data awal
       if (globalEventsData.length === 0) {
         globalEventsData = INITIAL_INSTANT_EVENTS;
         renderTicker(globalEventsData);
@@ -475,7 +476,9 @@ async function fetchEspnScoreboard(showSpinner = false) {
   }
 }
 
-// ===== 7. SCHEDULE, STANDINGS, NEWS, TEAMS, ETC =====
+// ============================================
+// SCHEDULE, STANDINGS, NEWS, TEAMS, ETC
+// ============================================
 
 function setScheduleDate(type) {
   const now = new Date();
@@ -736,7 +739,9 @@ function renderStandingsFromData(data) {
   `).join('');
 }
 
-// ===== 8. NEWS, TEAMS, INJURIES, TRANSACTIONS =====
+// ============================================
+// NEWS, TEAMS, INJURIES, TRANSACTIONS
+// ============================================
 
 async function fetchEspnNews() {
   const container = document.getElementById('espn-news-container');
@@ -903,7 +908,9 @@ async function fetchEspnTransactions() {
   }
 }
 
-// ===== 9. AI FUNCTIONS =====
+// ============================================
+// AI FUNCTIONS
+// ============================================
 
 function setAiPrompt(text) {
   const input = document.getElementById('ai-prompt-input');
@@ -1011,7 +1018,9 @@ async function runAiPrediction() {
   }
 }
 
-// ===== 10. TRANSLATION =====
+// ============================================
+// TRANSLATION
+// ============================================
 
 async function translateNewsArticle(cardIdx, headline, description, btnEl) {
   const h_el = document.querySelector(`.news-headline-${cardIdx}`);
@@ -1069,7 +1078,9 @@ async function translateNewsArticle(cardIdx, headline, description, btnEl) {
   }
 }
 
-// ===== 11. MATCH DETAIL =====
+// ============================================
+// MATCH DETAIL
+// ============================================
 
 async function openMatchDetail(eventId) {
   const modal = document.getElementById('match-detail-modal');
@@ -1114,7 +1125,9 @@ async function openMatchDetail(eventId) {
   }
 }
 
-// ===== 12. AUTH FUNCTIONS =====
+// ============================================
+// AUTH FUNCTIONS
+// ============================================
 
 function openAuthModal(mode = 'login') {
   authTabMode = mode;
@@ -1156,7 +1169,7 @@ async function handleAuthSubmit(e) {
     }
     return;
   }
-  let mockUsers = getMockUsersDB();
+  let mockUsers = getMockUsers();
   let existing = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
   if (!existing) {
     existing = {
@@ -1169,13 +1182,13 @@ async function handleAuthSubmit(e) {
       subscription_status: isSuperAdminEmail ? 'active' : 'free'
     };
     mockUsers.push(existing);
-    setMockUsersDB(mockUsers);
+    setMockUsers(mockUsers);
   } else if (isSuperAdminEmail) {
     existing.role = 'admin';
     existing.is_vip = true;
     existing.vip_expires_at = '2099-12-31';
     existing.subscription_status = 'active';
-    setMockUsersDB(mockUsers);
+    setMockUsers(mockUsers);
   }
   currentUser = existing;
   localStorage.setItem('ganemax_user_session', JSON.stringify(currentUser));
@@ -1240,7 +1253,9 @@ function closeModal(modalId) {
   }
 }
 
-// ===== 13. PAYWALL & ADMIN =====
+// ============================================
+// PAYWALL & ADMIN
+// ============================================
 
 function openQrisModal() {
   openQrisModalWithPlan(49000, '1 Bulan VIP Pro');
@@ -1276,7 +1291,7 @@ function simulateQrisPayment() {
   currentUser.payment_date = new Date().toISOString().split('T')[0];
   currentUser.vip_expires_at = expDate.toISOString().split('T')[0];
   localStorage.setItem('ganemax_user_session', JSON.stringify(currentUser));
-  const mockUsers = getMockUsersDB();
+  const mockUsers = getMockUsers();
   const uIndex = mockUsers.findIndex(u => u.email === currentUser.email);
   if (uIndex !== -1) {
     mockUsers[uIndex].is_vip = false;
@@ -1285,7 +1300,7 @@ function simulateQrisPayment() {
     mockUsers[uIndex].payment_plan = selectedQrisPlanName;
     mockUsers[uIndex].payment_date = currentUser.payment_date;
     mockUsers[uIndex].vip_expires_at = currentUser.vip_expires_at;
-    setMockUsersDB(mockUsers);
+    setMockUsers(mockUsers);
   }
   closeModal('qris-modal');
   renderAuthHeader();
@@ -1296,7 +1311,7 @@ function simulateQrisPayment() {
 function renderAdminUserTable() {
   const tbody = document.getElementById('admin-user-table-body');
   if (!tbody) return;
-  const mockUsers = getMockUsersDB();
+  const mockUsers = getMockUsers();
   tbody.innerHTML = mockUsers.map(u => {
     const isVipActive = isUserVipActive(u);
     const expValue = u.vip_expires_at || '';
@@ -1338,12 +1353,12 @@ function renderAdminUserTable() {
 }
 
 function activateUserVip(userId) {
-  const mockUsers = getMockUsersDB();
+  const mockUsers = getMockUsers();
   const user = mockUsers.find(u => u.id === userId);
   if (!user) return;
   user.is_vip = true;
   user.subscription_status = 'active';
-  setMockUsersDB(mockUsers);
+  setMockUsers(mockUsers);
   renderAdminUserTable();
   if (currentUser && currentUser.id === userId) {
     currentUser.is_vip = true;
@@ -1356,7 +1371,7 @@ function activateUserVip(userId) {
 }
 
 function rejectUserPayment(userId) {
-  const mockUsers = getMockUsersDB();
+  const mockUsers = getMockUsers();
   const user = mockUsers.find(u => u.id === userId);
   if (!user) return;
   if (!confirm(`Tolak pembayaran ${user.full_name || 'User'}?`)) return;
@@ -1364,7 +1379,7 @@ function rejectUserPayment(userId) {
   user.subscription_status = 'free';
   user.payment_method = null;
   user.payment_date = null;
-  setMockUsersDB(mockUsers);
+  setMockUsers(mockUsers);
   renderAdminUserTable();
   if (currentUser && currentUser.id === userId) {
     currentUser.is_vip = false;
@@ -1378,7 +1393,7 @@ function rejectUserPayment(userId) {
 }
 
 function extendUserVip(userId, days) {
-  const mockUsers = getMockUsersDB();
+  const mockUsers = getMockUsers();
   const user = mockUsers.find(u => u.id === userId);
   if (!user) return;
   const baseDate = user.vip_expires_at ? new Date(user.vip_expires_at) : new Date();
@@ -1388,12 +1403,12 @@ function extendUserVip(userId, days) {
 }
 
 function updateUserVipExpiryDate(userId, dateString) {
-  const mockUsers = getMockUsersDB();
+  const mockUsers = getMockUsers();
   const user = mockUsers.find(u => u.id === userId);
   if (user) {
     user.vip_expires_at = dateString;
     user.is_vip = dateString ? new Date(dateString) >= new Date() : false;
-    setMockUsersDB(mockUsers);
+    setMockUsers(mockUsers);
     renderAdminUserTable();
     if (currentUser && currentUser.id === userId) {
       currentUser.vip_expires_at = user.vip_expires_at;
@@ -1423,7 +1438,9 @@ function checkAiAccessPermission() {
   }
 }
 
-// ===== 14. EXPOSE ALL FUNCTIONS TO WINDOW =====
+// ============================================
+// EXPOSE ALL FUNCTIONS TO GLOBAL WINDOW
+// ============================================
 window.switchTab = switchTab;
 window.changeLeague = changeLeague;
 window.refreshCurrentLeagueData = refreshCurrentLeagueData;
@@ -1455,7 +1472,9 @@ window.updateUserVipExpiryDate = updateUserVipExpiryDate;
 window.translateNewsArticle = translateNewsArticle;
 window.inspectTeamRoster = inspectTeamRoster;
 
-// ===== 15. INIT ON DOM READY =====
+// ============================================
+// INIT ON DOM READY
+// ============================================
 document.addEventListener('DOMContentLoaded', function() {
   console.log('🚀 GaneMaX App Initializing...');
   renderLeagueBadges();
