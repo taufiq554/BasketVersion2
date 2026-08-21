@@ -1,316 +1,491 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GaneMaX.ai Live Basketball - Pro AI Broadcast & Analytics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>GaneMaX Score - Basketball Live & AI Analytics</title>
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Google Fonts: Sora, Inter, JetBrains Mono -->
+  <!-- Supabase JS Client CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
   
-  <!-- FontAwesome Icons -->
+  <!-- FontAwesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- Custom Styles -->
+  <!-- External Styles -->
   <link rel="stylesheet" href="styles.css">
-
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'action-blue': '#0055FF',
-            'primary-dark': '#0041C8',
-            'data-cyan': '#00C2FF',
-            'stadium-gray': '#F4F7FA',
-            'stat-black': '#0A0B0D',
-            'neutral-muted': '#64748B',
-            'border-light': '#E2E8F0',
-          },
-          fontFamily: {
-            sora: ['Sora', 'sans-serif'],
-            inter: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
-          },
-          boxShadow: {
-            'floating': '0px 10px 30px rgba(0, 85, 255, 0.12)',
-            'card': '0px 4px 15px rgba(10, 11, 13, 0.04)',
-            'tab-active': '0px 4px 14px rgba(0, 85, 255, 0.3)',
-          }
-        }
-      }
-    }
-  </script>
+  
+  <!-- External Config & App -->
+  <script type="module" src="config.js"></script>
+  <script type="module" src="app.js"></script>
 </head>
-<body class="bg-white min-h-screen flex flex-col text-[#0A0B0D] selection:bg-action-blue selection:text-white">
 
-  <!-- HEADER BRANDING -->
-  <header class="border-b border-border-light bg-white sticky top-0 z-40 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center justify-between h-16 gap-3">
-        
-        <!-- Logo GaneMaX.ai -->
-        <div class="flex items-center gap-3 cursor-pointer shrink-0" onclick="switchMainTab('scores')">
-          <div class="relative w-10 h-10 rounded-xl overflow-hidden bg-action-blue flex items-center justify-center text-white font-sora font-extrabold text-xl shadow-md border border-white/20">
-            <img src="logo.jpg" id="app-logo-img" alt="GaneMaX.ai Logo" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('app-logo-fallback').style.display='flex';">
-            <div id="app-logo-fallback" class="hidden w-full h-full bg-gradient-to-br from-action-blue to-primary-dark items-center justify-center text-white font-sora font-extrabold text-xl">
-              G
-            </div>
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <span class="font-sora font-extrabold text-xl tracking-tight text-stat-black">GaneMaX<span class="text-action-blue">.ai</span></span>
-              <span class="bg-action-blue text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded-full tracking-widest uppercase shadow-sm">PRO BROADCAST</span>
-            </div>
-            <p class="text-[10px] font-mono text-neutral-muted tracking-wider">LIVE BASKETBALL & AI ENGINE</p>
-          </div>
+<body class="bg-light-bg text-text-main font-sans min-h-screen pb-24 lg:pb-8 antialiased">
+
+  <!-- ===== TOP HEADER ===== -->
+  <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-border-slate shadow-sm">
+    <div class="mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5 cursor-pointer shrink-0 active:scale-95 transition-transform" onclick="window.switchTab('scores')">
+        <div class="w-10 h-10 rounded-xl overflow-hidden shrink-0 flex items-center justify-center bg-action-blue shadow-md shadow-action-blue/20">
+          <img src="logo.jpg" alt="GaneMaX Logo" class="w-full h-full object-cover" onerror="this.outerHTML='<i class=\'fa-solid fa-basketball text-white text-xl animate-bounce\'></i>';">
         </div>
-
-        <!-- League Switcher Trigger -->
-        <button onclick="openLeagueModal()" class="flex items-center gap-2.5 bg-stadium-gray hover:bg-blue-50/60 px-3.5 py-2 rounded-xl border border-border-light hover:border-action-blue transition shadow-sm cursor-pointer">
-          <span class="w-2.5 h-2.5 rounded-full bg-action-blue pulsate-live"></span>
-          <span id="current-league-display-btn" class="font-sora font-bold text-xs text-stat-black">🏀 NBA (USA)</span>
-          <i class="fa-solid fa-chevron-down text-[10px] text-neutral-muted ml-1"></i>
-        </button>
-
-        <!-- Status & Update Button -->
-        <div class="flex items-center gap-2">
-          <button onclick="fetchAllLeagueData()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-border-light text-xs font-mono font-semibold text-neutral-muted hover:border-action-blue hover:text-action-blue transition shadow-sm">
-            <i id="refresh-icon" class="fa-solid fa-arrows-rotate"></i>
-            <span class="hidden sm:inline">Refresh Feed</span>
-          </button>
+        <div class="flex flex-col">
+          <div class="flex items-center gap-1.5">
+            <span class="font-display font-extrabold text-lg sm:text-xl tracking-tight text-text-main">
+              GaneMaX <span class="text-action-blue">Score</span>
+            </span>
+            <span class="px-1.5 py-0.5 text-[9px] font-mono font-bold bg-soft-blue text-action-blue rounded border border-action-blue/20">PRO</span>
+          </div>
+          <p class="text-[10px] text-action-blue font-semibold tracking-wide">Basketball Live</p>
         </div>
       </div>
-    </div>
 
-    <!-- TAB NAVIGATION BAR -->
-    <div class="border-t border-border-light bg-stadium-gray px-4 py-2">
-      <div class="max-w-7xl mx-auto flex overflow-x-auto gap-2 text-xs font-sora font-semibold scrollbar-none">
-        <button id="nav-scores" onclick="switchMainTab('scores')" class="tab-btn tab-btn-active whitespace-nowrap px-4 py-2 rounded-xl border border-transparent flex items-center gap-2">
-          <i class="fa-solid fa-basketball"></i> Scores & Live
+      <div class="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 text-xs font-semibold shrink-0">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span id="live-status-header-text">GaneMaX Engine: Live Sync</span>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button onclick="window.refreshCurrentLeagueData(true)" class="p-2.5 text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-text-sub hover:text-action-blue transition-all active:scale-90">
+          <i class="fa-solid fa-arrows-rotate text-action-blue" id="api-refresh-icon"></i>
         </button>
-        <button id="nav-standings" onclick="switchMainTab('standings')" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl border border-border-light bg-white text-neutral-muted hover:text-action-blue flex items-center gap-2">
-          <i class="fa-solid fa-list-ol"></i> Klasemen Overall
-        </button>
-        <button id="nav-teams" onclick="switchMainTab('teams')" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl border border-border-light bg-white text-neutral-muted hover:text-action-blue flex items-center gap-2">
-          <i class="fa-solid fa-users-viewfinder"></i> Tim & Hub Skuad
-        </button>
-        <button id="nav-stats" onclick="switchMainTab('stats')" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl border border-border-light bg-white text-neutral-muted hover:text-action-blue flex items-center gap-2">
-          <i class="fa-solid fa-chart-line"></i> Pemimpin Statistik
-        </button>
-        <button id="nav-transactions" onclick="switchMainTab('transactions')" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl border border-border-light bg-white text-neutral-muted hover:text-action-blue flex items-center gap-2">
-          <i class="fa-solid fa-right-left"></i> Transaksi & Draft
-        </button>
-        <button id="nav-injuries" onclick="switchMainTab('injuries')" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl border border-border-light bg-white text-neutral-muted hover:text-action-blue flex items-center gap-2">
-          <i class="fa-solid fa-user-doctor"></i> Laporan Cedera
-        </button>
-        <button id="nav-rankings" onclick="switchMainTab('rankings')" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl border border-border-light bg-white text-neutral-muted hover:text-action-blue flex items-center gap-2">
-          <i class="fa-solid fa-ranking-star"></i> Rankings & BPI
-        </button>
-        <button id="nav-ai" onclick="switchMainTab('ai')" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl border border-border-light bg-white text-neutral-muted hover:text-action-blue flex items-center gap-2">
-          <i class="fa-solid fa-brain text-data-cyan"></i> GaneMaX.ai Analyst
-        </button>
-        <button id="nav-compare" onclick="switchMainTab('compare')" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl border border-border-light bg-white text-neutral-muted hover:text-action-blue flex items-center gap-2">
-          <i class="fa-solid fa-scale-balanced"></i> Bandingkan Pemain
-        </button>
-        <button id="nav-news" onclick="switchMainTab('news')" class="tab-btn whitespace-nowrap px-4 py-2 rounded-xl border border-border-light bg-white text-neutral-muted hover:text-action-blue flex items-center gap-2">
-          <i class="fa-solid fa-newspaper"></i> Berita
-        </button>
+        <div id="auth-header-container"></div>
       </div>
     </div>
   </header>
 
-  <!-- MAIN CONTENT AREA -->
-  <main class="flex-1 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <!-- ===== LEAGUE BADGES ===== -->
+  <section class="bg-white border-b border-border-slate py-2.5 px-3 shadow-sm">
+    <div class="mx-auto flex items-center gap-2 overflow-x-auto custom-scrollbar py-1" id="league-badges-container"></div>
+  </section>
 
-      <!-- SCORES TAB -->
-      <div id="tab-scores" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div id="scores-grid" class="col-span-full">Loading scores...</div>
-        <div id="game-detail" class="col-span-full mt-6"></div>
+  <!-- ===== NAVIGATION ===== -->
+  <nav class="bg-white border-b border-border-slate shadow-sm sticky top-16 z-30">
+    <div class="mx-auto px-3 sm:px-4">
+      <div class="flex items-center justify-between overflow-x-auto custom-scrollbar py-2 gap-2 text-xs font-semibold">
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <button id="nav-scores" onclick="window.switchTab('scores')" class="tab-btn-active px-3.5 py-2 rounded-xl border border-transparent transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap shrink-0">
+            <i class="fa-solid fa-circle-dot text-live-red"></i> Live Score
+          </button>
+          <button id="nav-schedule" onclick="window.switchTab('schedule')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0">
+            <i class="fa-regular fa-calendar-days text-action-blue"></i> Jadwal Match
+          </button>
+          <button id="nav-standings" onclick="window.switchTab('standings')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0">
+            <i class="fa-solid fa-list-ol text-court-gold"></i> Klasemen
+          </button>
+          <button id="nav-news" onclick="window.switchTab('news')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0">
+            <i class="fa-regular fa-newspaper text-action-blue"></i> Berita Utama
+          </button>
+          <button id="nav-teams" onclick="window.switchTab('teams')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0">
+            <i class="fa-solid fa-shield-halved text-purple-600"></i> Tim & Roster
+          </button>
+          <button id="nav-ai" onclick="window.switchTab('ai')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-action-blue/30 bg-soft-blue shrink-0">
+            <i class="fa-solid fa-brain text-action-blue"></i> GaneMaX.ai
+          </button>
+          <button id="nav-injuries" onclick="window.switchTab('injuries')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0">
+            <i class="fa-solid fa-user-nurse text-rose-500"></i> Cedera
+          </button>
+          <button id="nav-transactions" onclick="window.switchTab('transactions')" class="px-3.5 py-2 rounded-xl text-text-sub hover:bg-slate-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap border border-slate-200 shrink-0">
+            <i class="fa-solid fa-arrow-right-arrow-left text-amber-500"></i> Transfer
+          </button>
+          <button id="nav-admin" onclick="window.switchTab('admin')" class="hidden px-3.5 py-2 rounded-xl text-amber-700 bg-amber-50 border border-amber-200 font-bold hover:bg-amber-100 transition-all active:scale-95 flex items-center gap-2 whitespace-nowrap shrink-0">
+            <i class="fa-solid fa-user-shield"></i> Admin Panel
+          </button>
+        </div>
+        <button onclick="window.openQrisModal()" class="hidden md:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-court-gold to-amber-500 text-white font-bold text-xs hover:brightness-110 active:scale-95 transition-all shadow-md shrink-0">
+          <i class="fa-solid fa-crown text-white"></i> VIP Pro Pass
+        </button>
       </div>
+    </div>
+  </nav>
 
-      <!-- STANDINGS TAB -->
-      <div id="tab-standings" class="hidden">
-        <h2 class="text-2xl font-sora font-bold mb-4">Klasemen Liga</h2>
-        <div id="standings-container"></div>
+  <!-- ===== TICKER ===== -->
+  <section id="games-ticker-section" class="bg-slate-900 text-white py-2.5 px-3 border-b border-slate-800 animate-fade-in">
+    <div class="mx-auto flex items-center gap-4">
+      <div class="text-[11px] font-mono font-bold text-action-blue uppercase tracking-wider whitespace-nowrap flex items-center gap-1.5 shrink-0" id="ticker-league-label">
+        <i class="fa-solid fa-bolt text-court-gold animate-pulse"></i> NBA LIVE TICKER
       </div>
+      <div class="flex items-center gap-3 overflow-x-auto custom-scrollbar py-1 text-xs" id="espn-ticker-container"></div>
+    </div>
+  </section>
 
-      <!-- TEAMS TAB -->
-      <div id="tab-teams" class="hidden">
-        <h2 class="text-2xl font-sora font-bold mb-4">Tim & Roster</h2>
-        <div id="teams-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+  <!-- ===== HERO SCOREBOARD ===== -->
+  <div id="scoreboard-hero" class="mx-auto px-3 sm:px-4 mt-3 sm:mt-4 animate-fade-in">
+    <div class="app-card rounded-2xl overflow-hidden p-3 sm:p-4 relative border-action-blue/30 bg-gradient-to-br from-white via-slate-50 to-blue-50/50" id="hero-card-content"></div>
+  </div>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="mx-auto px-3 sm:px-4 py-4 sm:py-5">
+    <!-- TAB SCORES -->
+    <div id="tab-scores" class="space-y-5 animate-fade-in">
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar text-xs font-medium">
+          <button onclick="window.filterMatchCategory('all')" id="btn-filter-all" class="px-3.5 py-1.5 rounded-xl bg-action-blue text-white font-bold transition-all active:scale-95">Semua Match</button>
+          <button onclick="window.filterMatchCategory('in')" id="btn-filter-in" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-text-sub hover:text-text-main flex items-center gap-1.5 transition-all active:scale-95">
+            <span class="w-2 h-2 rounded-full bg-live-red animate-pulse"></span> Live Now
+          </button>
+          <button onclick="window.filterMatchCategory('post')" id="btn-filter-post" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-text-sub hover:text-text-main transition-all active:scale-95">Selesai</button>
+          <button onclick="window.filterMatchCategory('pre')" id="btn-filter-pre" class="px-3.5 py-1.5 rounded-xl bg-slate-100 text-text-sub hover:text-text-main transition-all active:scale-95">Akan Datang</button>
+        </div>
+        <div class="text-xs text-text-sub font-mono flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span id="active-league-badge-text" class="font-bold text-action-blue">GaneMaX Live: NBA</span>
+        </div>
       </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="match-cards-container"></div>
+    </div>
 
-      <!-- STATS TAB -->
-      <div id="tab-stats" class="hidden">
-        <h2 class="text-2xl font-sora font-bold mb-4">Pemimpin Statistik</h2>
-        <div id="stats-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+    <!-- TAB SCHEDULE -->
+    <div id="tab-schedule" class="hidden space-y-5 animate-fade-in">
+      <div class="app-card p-4 sm:p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-4 border-b border-slate-200">
+          <div>
+            <h3 class="font-display font-bold text-lg flex items-center gap-2 text-text-main">
+              <i class="fa-regular fa-calendar-days text-action-blue"></i> Jadwal Pertandingan
+            </h3>
+            <p class="text-xs text-text-sub" id="schedule-league-subtitle">Jadwal resmi liga pilihan Anda.</p>
+          </div>
+          <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar w-full sm:w-auto">
+            <button onclick="window.setScheduleDate('yesterday')" id="sched-date-yesterday" class="px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all whitespace-nowrap">Kemarin</button>
+            <button onclick="window.setScheduleDate('today')" id="sched-date-today" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-action-blue text-white shadow-sm active:scale-95 transition-all whitespace-nowrap">Hari Ini</button>
+            <button onclick="window.setScheduleDate('tomorrow')" id="sched-date-tomorrow" class="px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all whitespace-nowrap">Besok</button>
+            <button onclick="window.setScheduleDate('nextday')" id="sched-date-nextday" class="px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all whitespace-nowrap">Lusa</button>
+            <input type="date" id="schedule-custom-date" onchange="window.setScheduleDate('custom')" class="px-2.5 py-1 text-xs rounded-xl border border-slate-200 font-mono bg-slate-50 focus:outline-none focus:ring-1 focus:ring-action-blue cursor-pointer">
+          </div>
+        </div>
+        <div class="space-y-3" id="schedule-list-container"></div>
       </div>
+    </div>
 
-      <!-- TRANSACTIONS TAB -->
-      <div id="tab-transactions" class="hidden">
-        <h2 class="text-2xl font-sora font-bold mb-4">Transaksi & Draft</h2>
-        <div id="transactions-container"></div>
-      </div>
-
-      <!-- INJURIES TAB -->
-      <div id="tab-injuries" class="hidden">
-        <h2 class="text-2xl font-sora font-bold mb-4">Laporan Cedera</h2>
-        <div id="injuries-container" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-      </div>
-
-      <!-- RANKINGS TAB -->
-      <div id="tab-rankings" class="hidden">
-        <h2 class="text-2xl font-sora font-bold mb-4">Rankings & Power Index</h2>
-        <div id="rankings-container" class="space-y-3"></div>
-      </div>
-
-      <!-- AI ANALYST TAB -->
-      <div id="tab-ai" class="hidden">
-        <h2 class="text-2xl font-sora font-bold mb-4">
-          <i class="fa-solid fa-brain text-data-cyan mr-2"></i> GaneMaX.ai Analyst
-        </h2>
-        
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Deep Analysis Section -->
-          <div class="lg:col-span-2 bg-white border border-border-light rounded-2xl p-6">
-            <h3 class="font-sora font-bold text-stat-black mb-4">Analisis Taktis Mendalam</h3>
-            
-            <div class="mb-4 space-y-3">
-              <div>
-                <label class="block text-xs font-mono font-bold text-neutral-muted mb-2">PILIH PERTANDINGAN</label>
-                <select id="ai-select-match" class="w-full px-3 py-2 border border-border-light rounded-lg text-sm">
-                  <option>Loading matches...</option>
-                </select>
-              </div>
-              
-              <div>
-                <label class="block text-xs font-mono font-bold text-neutral-muted mb-2">FOKUS ANALISIS</label>
-                <div class="space-y-2">
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="ai-focus" value="full-scout" checked>
-                    <span class="text-sm">Scout Penuh (Taktik, Pemain, Strategi)</span>
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="ai-focus" value="offensive">
-                    <span class="text-sm">Analisis Ofensif</span>
-                  </label>
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="ai-focus" value="defensive">
-                    <span class="text-sm">Analisis Defensif</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-            
-            <button onclick="runDeepAIAnalytics()" class="w-full bg-action-blue text-white px-4 py-2.5 rounded-xl font-semibold transition hover:bg-primary-dark mb-4">
-              <i class="fa-solid fa-sparkles mr-2"></i> Generate Laporan Scouting
+    <!-- TAB STANDINGS -->
+    <div id="tab-standings" class="hidden space-y-5 animate-fade-in">
+      <div class="app-card p-4 sm:p-6 space-y-5">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 pb-4">
+          <div>
+            <h3 class="font-display font-bold text-lg text-text-main" id="standings-title-text">Klasemen Season Realtime</h3>
+            <p class="text-xs text-text-sub">Peringkat resmi seluruh tim & statistik kemenangan.</p>
+          </div>
+          <div class="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200 w-full sm:w-auto">
+            <button onclick="window.setStandingsViewMode('overall')" id="btn-standings-overall" class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold bg-action-blue text-white shadow-sm transition-all active:scale-95">
+              <i class="fa-solid fa-globe me-1"></i> Overall
             </button>
-            
-            <div id="ai-deep-output" class="bg-stadium-gray rounded-xl p-4 min-h-64 max-h-96 overflow-y-auto text-sm leading-relaxed whitespace-pre-wrap text-neutral-muted">
-              Output akan muncul di sini...
+            <button onclick="window.setStandingsViewMode('divided')" id="btn-standings-divided" class="flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-medium text-text-sub hover:text-text-main transition-all active:scale-95">
+              <i class="fa-solid fa-layer-group me-1"></i> Per Konferensi
+            </button>
+          </div>
+        </div>
+        <div id="standings-sections-container" class="space-y-6"></div>
+      </div>
+    </div>
+
+    <!-- TAB NEWS -->
+    <div id="tab-news" class="hidden space-y-5 animate-fade-in">
+      <div class="flex justify-between items-center">
+        <div>
+          <h3 class="font-display font-bold text-lg flex items-center gap-2 text-text-main">
+            <i class="fa-regular fa-newspaper text-action-blue"></i> Berita & Headline
+          </h3>
+          <p class="text-xs text-text-sub">Laporan resmi jurnalis seputar tim dan pemain.</p>
+        </div>
+        <button onclick="window.fetchEspnNews()" class="px-3.5 py-1.5 text-xs bg-action-blue text-white rounded-xl font-bold hover:bg-action-hover active:scale-95 transition-all shadow-sm">
+          <i class="fa-solid fa-rotate me-1"></i> Refresh
+        </button>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="espn-news-container"></div>
+    </div>
+
+    <!-- TAB TEAMS -->
+    <div id="tab-teams" class="hidden space-y-5 animate-fade-in">
+      <div class="flex justify-between items-center">
+        <div>
+          <h3 class="font-display font-bold text-lg flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-purple-600"></i> Tim & Roster
+          </h3>
+          <p class="text-xs text-text-sub">Inspeksi roster pemain resmi tiap klub.</p>
+        </div>
+        <button onclick="window.fetchEspnTeams()" class="px-3.5 py-1.5 text-xs bg-purple-600 text-white rounded-xl font-bold active:scale-95 transition-all shadow-sm">
+          <i class="fa-solid fa-rotate me-1"></i> Sync Teams
+        </button>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" id="espn-teams-container"></div>
+    </div>
+
+    <!-- TAB AI -->
+    <div id="tab-ai" class="hidden space-y-5 animate-fade-in">
+      <div id="ai-paywall-overlay" class="hidden app-card overflow-hidden">
+        <div class="bg-gradient-to-r from-action-blue via-action-blue/80 to-slate-700 px-6 sm:px-8 py-8 text-white relative">
+          <div class="relative space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="w-14 h-14 rounded-2xl bg-white/10 border-2 border-white/30 flex items-center justify-center text-2xl backdrop-blur-sm">
+                <i class="fa-solid fa-brain"></i>
+              </div>
+              <div>
+                <h2 class="font-display font-extrabold text-2xl">GaneMaX.ai Pro</h2>
+                <p class="text-sm text-white/80 font-medium">AI Basketball Intelligence</p>
+              </div>
             </div>
-            
-            <div class="flex gap-2 mt-4 text-xs">
-              <div class="flex-1 px-3 py-2 bg-blue-50 rounded-lg text-center">
-                <div class="font-bold text-action-blue">Status</div>
-                <div id="ai-status-indicator" class="text-neutral-muted">Ready</div>
+            <p class="text-sm text-white/90 max-w-xl leading-relaxed">
+              Dapatkan analisis REAL-TIME dengan AI terdepan. Prediksi skor akurat, win rate analysis, key matchups.
+            </p>
+          </div>
+        </div>
+        <div class="px-6 sm:px-8 py-6 bg-gradient-to-b from-white to-slate-50">
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div class="space-y-2"><div class="text-2xl">🎯</div><p class="text-[11px] font-semibold">Prediksi Skor</p></div>
+            <div class="space-y-2"><div class="text-2xl">📊</div><p class="text-[11px] font-semibold">Win Rate</p></div>
+            <div class="space-y-2"><div class="text-2xl">🔍</div><p class="text-[11px] font-semibold">Key Matchups</p></div>
+            <div class="space-y-2"><div class="text-2xl">⭐</div><p class="text-[11px] font-semibold">Fantasy Picks</p></div>
+          </div>
+          <div class="space-y-3 mb-6">
+            <div onclick="window.openQrisModalWithPlan(49000, '1 Bulan VIP Pro')" class="group cursor-pointer">
+              <div class="p-4 rounded-2xl border-2 border-slate-200 bg-white hover:border-action-blue hover:shadow-lg transition-all active:scale-95">
+                <div class="flex items-start justify-between mb-3">
+                  <div><p class="text-xs font-bold text-text-sub uppercase">Bulanan</p><h4 class="font-bold text-base mt-1">1 Bulan VIP Pro</h4></div>
+                  <div class="text-right"><p class="text-xs text-text-sub">Per Bulan</p><p class="text-lg font-mono font-extrabold text-action-blue">Rp 49K</p></div>
+                </div>
+                <button class="w-full py-2 bg-slate-100 hover:bg-action-blue hover:text-white text-action-blue rounded-xl font-bold text-xs transition-all">Pilih Paket</button>
+              </div>
+            </div>
+            <div onclick="window.openQrisModalWithPlan(99000, '2 Bulan VIP Pro')" class="group cursor-pointer relative">
+              <div class="absolute -top-2 -right-2 px-3 py-1 bg-gradient-to-r from-action-blue to-court-gold text-white rounded-full text-[10px] font-bold shadow-lg">⭐ HEMAT 17%</div>
+              <div class="p-4 rounded-2xl border-2 border-action-blue bg-gradient-to-br from-soft-blue to-white hover:shadow-xl transition-all active:scale-95 ring-2 ring-action-blue/20">
+                <div class="flex items-start justify-between mb-3">
+                  <div><p class="text-xs font-bold text-action-blue uppercase">✨ Populer</p><h4 class="font-bold text-base mt-1">2 Bulan VIP Pro</h4></div>
+                  <div class="text-right"><p class="text-xs text-text-sub">Hemat</p><p class="text-lg font-mono font-extrabold text-action-blue">Rp 99K</p></div>
+                </div>
+                <button class="w-full py-2 bg-gradient-to-r from-action-blue to-action-blue/80 text-white rounded-xl font-bold text-xs transition-all shadow-md">Paling Populer</button>
+              </div>
+            </div>
+            <div onclick="window.openQrisModalWithPlan(559000, '1 Tahun VIP Pro')" class="group cursor-pointer relative">
+              <div class="absolute -top-2 -right-2 px-3 py-1 bg-gradient-to-r from-court-gold to-amber-600 text-white rounded-full text-[10px] font-bold shadow-lg">👑 HEMAT 60%</div>
+              <div class="p-4 rounded-2xl border-2 border-court-gold/50 bg-gradient-to-br from-amber-50/50 to-white hover:shadow-xl hover:border-court-gold transition-all active:scale-95">
+                <div class="flex items-start justify-between mb-3">
+                  <div><p class="text-xs font-bold text-court-gold uppercase">🏆 Super Value</p><h4 class="font-bold text-base mt-1">1 Tahun VIP Pro</h4></div>
+                  <div class="text-right"><p class="text-xs text-text-sub">Terbaik</p><p class="text-lg font-mono font-extrabold text-court-gold">Rp 559K</p></div>
+                </div>
+                <button class="w-full py-2 bg-gradient-to-r from-court-gold to-amber-600 text-white rounded-xl font-bold text-xs transition-all shadow-md">Upgrade Premium</button>
               </div>
             </div>
           </div>
-
-          <!-- Quick Chat Section -->
-          <div class="bg-white border border-border-light rounded-2xl p-6 h-fit">
-            <h3 class="font-sora font-bold text-stat-black mb-4">Tanya Cepat</h3>
-            
-            <div class="space-y-4">
-              <div>
-                <label class="block text-xs font-mono font-bold text-neutral-muted mb-2">PERTANYAAN</label>
-                <form onsubmit="handleAIChatSubmit(event)" class="flex gap-2">
-                  <input id="ai-user-input" type="text" placeholder="Contoh: Siapa yang menang..." class="flex-1 px-3 py-2 border border-border-light rounded-lg text-sm" required>
-                  <button type="submit" class="px-3 py-2 bg-action-blue text-white rounded-lg font-bold transition hover:bg-primary-dark">
-                    <i class="fa-solid fa-paper-plane"></i>
-                  </button>
-                </form>
-              </div>
-              
-              <div id="ai-quick-console" class="bg-stadium-gray rounded-xl p-3 min-h-32 max-h-48 overflow-y-auto text-xs text-neutral-muted leading-relaxed">
-                Jawaban cepat akan muncul di sini...
-              </div>
-            </div>
+          <div class="p-4 rounded-xl bg-blue-50 border border-action-blue/20 space-y-2">
+            <p class="text-xs font-semibold text-text-main flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-action-blue"></i> Proses Aktivasi Cepat
+            </p>
+            <p class="text-xs text-text-sub">Kirim bukti QRIS ke <strong>@mrpangeranz</strong> → Aktivasi 5-10 menit</p>
           </div>
         </div>
       </div>
-
-      <!-- COMPARE PLAYERS TAB -->
-      <div id="tab-compare" class="hidden">
-        <h2 class="text-2xl font-sora font-bold mb-4">
-          <i class="fa-solid fa-scale-balanced text-action-blue mr-2"></i> Bandingkan Pemain
-        </h2>
-        
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div class="bg-white border border-border-light rounded-2xl p-6">
-            <h3 class="font-sora font-bold text-stat-black mb-4">Input Pemain</h3>
-            
-            <div class="space-y-4">
-              <div>
-                <label class="block text-xs font-mono font-bold text-neutral-muted mb-2">PEMAIN 1</label>
-                <input id="compare-player-1" type="text" placeholder="Contoh: LeBron James" class="w-full px-3 py-2 border border-border-light rounded-lg text-sm">
-              </div>
-              
-              <div>
-                <label class="block text-xs font-mono font-bold text-neutral-muted mb-2">PEMAIN 2</label>
-                <input id="compare-player-2" type="text" placeholder="Contoh: Kevin Durant" class="w-full px-3 py-2 border border-border-light rounded-lg text-sm">
-              </div>
-              
-              <button onclick="runPlayerComparisonAI()" class="w-full bg-action-blue text-white px-4 py-2.5 rounded-xl font-semibold transition hover:bg-primary-dark">
-                <i class="fa-solid fa-brain mr-2"></i> Bandingkan
-              </button>
+      <div id="ai-unlocked-content" class="hidden app-card p-6 border-2 border-action-blue/40 bg-gradient-to-br from-white via-soft-blue/10 to-slate-50">
+        <div class="flex items-center justify-between pb-4 mb-4 border-b-2 border-action-blue/20">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-action-blue to-action-blue/60 text-white flex items-center justify-center font-bold shadow-lg shadow-action-blue/30">
+              <i class="fa-solid fa-brain text-xl"></i>
             </div>
+            <div><h2 class="font-display font-bold text-lg">GaneMaX.ai Intelligence</h2><p class="text-xs text-text-sub">Real-Time Basketball AI</p></div>
           </div>
-          
-          <div class="lg:col-span-2 bg-white border border-border-light rounded-2xl p-6">
-            <h3 class="font-sora font-bold text-stat-black mb-4">Hasil Analisis</h3>
-            <div id="compare-result-card" class="text-sm text-neutral-muted leading-relaxed whitespace-pre-wrap min-h-64">
-              Hasil perbandingan akan muncul di sini...
-            </div>
+          <div class="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-100 to-emerald-50 border border-emerald-300">
+            <i class="fa-solid fa-circle text-emerald-500 text-[8px] animate-pulse"></i>
+            <span class="text-xs font-bold text-emerald-700">VIP Active</span>
           </div>
         </div>
+        <div class="grid grid-cols-4 gap-2 mb-4 pb-4 border-b border-slate-100">
+          <button onclick="window.setAiPrompt('Analisis Win Rate Lakers vs Warriors')" class="p-2 rounded-lg bg-slate-50 hover:bg-action-blue/5 active:scale-95 transition-all text-center space-y-1">
+            <div class="text-lg">🎯</div><p class="text-[9px] font-semibold">Win Rate</p>
+          </button>
+          <button onclick="window.setAiPrompt('Prediksi Total Poin Over/Under Boston Celtics')" class="p-2 rounded-lg bg-slate-50 hover:bg-action-blue/5 active:scale-95 transition-all text-center space-y-1">
+            <div class="text-lg">📊</div><p class="text-[9px] font-semibold">Over/Under</p>
+          </button>
+          <button onclick="window.setAiPrompt('Rekomendasi Pemain Fantasy Basketball')" class="p-2 rounded-lg bg-slate-50 hover:bg-action-blue/5 active:scale-95 transition-all text-center space-y-1">
+            <div class="text-lg">⭐</div><p class="text-[9px] font-semibold">Fantasy</p>
+          </button>
+          <button onclick="window.setAiPrompt('Analisis key matchups dan strategi taktis')" class="p-2 rounded-lg bg-slate-50 hover:bg-action-blue/5 active:scale-95 transition-all text-center space-y-1">
+            <div class="text-lg">🔍</div><p class="text-[9px] font-semibold">Matchups</p>
+          </button>
+        </div>
+        <div class="space-y-3 mb-4">
+          <label class="block text-xs font-bold text-text-main uppercase">Tanyakan Analisis AI:</label>
+          <div class="flex gap-2">
+            <input type="text" id="ai-prompt-input" placeholder="Contoh: Analisis Lakers vs Warriors..." 
+              class="flex-1 px-4 py-2.5 text-xs rounded-xl bg-white border-2 border-slate-200 focus:border-action-blue focus:ring-2 focus:ring-action-blue/20 focus:outline-none transition-all">
+            <button onclick="window.runAiPrediction()" class="px-6 py-2.5 bg-gradient-to-r from-action-blue to-action-blue/80 hover:from-action-hover hover:to-action-hover/80 text-white rounded-xl font-bold text-xs flex items-center gap-2 active:scale-95 transition-all shadow-lg">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Analisis
+            </button>
+          </div>
+        </div>
+        <div id="ai-response-box" class="hidden p-4 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 border border-slate-700 text-xs font-mono space-y-2 leading-relaxed shadow-inner"></div>
       </div>
+    </div>
 
-      <!-- NEWS TAB -->
-      <div id="tab-news" class="hidden">
-        <h2 class="text-2xl font-sora font-bold mb-4">Berita & Update Terkini</h2>
-        <div id="news-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    <!-- TAB INJURIES -->
+    <div id="tab-injuries" class="hidden space-y-5 animate-fade-in">
+      <div class="app-card p-4 sm:p-6 space-y-4">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-200">
+          <div><h3 class="font-display font-bold text-lg flex items-center gap-2 text-rose-500"><i class="fa-solid fa-user-nurse"></i> Laporan Cedera</h3>
+          <p class="text-xs text-text-sub">Daftar medis pemain yang absen.</p></div>
+          <button onclick="window.fetchEspnInjuries()" class="px-3.5 py-1.5 text-xs bg-rose-500 text-white rounded-xl font-bold active:scale-95 transition-all shadow-sm"><i class="fa-solid fa-rotate me-1"></i> Update</button>
+        </div>
+        <div class="space-y-3" id="espn-injuries-container"></div>
       </div>
+    </div>
 
+    <!-- TAB TRANSACTIONS -->
+    <div id="tab-transactions" class="hidden space-y-5 animate-fade-in">
+      <div class="app-card p-4 sm:p-6 space-y-4">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-200">
+          <div><h3 class="font-display font-bold text-lg flex items-center gap-2 text-amber-600"><i class="fa-solid fa-arrow-right-arrow-left"></i> Transaksi & Trades</h3>
+          <p class="text-xs text-text-sub">Kabar penandatanganan kontrak dan pertukaran pemain.</p></div>
+          <button onclick="window.fetchEspnTransactions()" class="px-3.5 py-1.5 text-xs bg-amber-500 text-white rounded-xl font-bold active:scale-95 transition-all shadow-sm"><i class="fa-solid fa-rotate me-1"></i> Sync</button>
+        </div>
+        <div class="space-y-3" id="espn-transactions-container"></div>
+      </div>
+    </div>
+
+    <!-- TAB ADMIN -->
+    <div id="tab-admin" class="hidden space-y-5 animate-fade-in">
+      <div class="bg-gradient-to-r from-slate-900 via-action-blue to-blue-900 text-white p-6 rounded-2xl shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <span class="px-2.5 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-extrabold uppercase">SUPER ADMIN</span>
+          <h2 class="font-display font-extrabold text-2xl mt-1">GaneMaX Pro Control</h2>
+          <p class="text-xs font-medium opacity-80">Atur Masa Aktif VIP User & Akses AI Analytics.</p>
+        </div>
+        <button onclick="window.refreshAdminData()" class="px-4 py-2 bg-white text-action-blue rounded-xl font-bold text-xs hover:bg-slate-100 active:scale-95 transition-all shadow-md">
+          <i class="fa-solid fa-rotate me-1"></i> Sync DB
+        </button>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="app-card p-4 border-l-4 border-action-blue"><p class="text-[11px] font-semibold text-text-sub">Total Pengguna</p><h4 class="text-2xl font-bold font-mono mt-1" id="admin-stat-users">1,482</h4></div>
+        <div class="app-card p-4 border-l-4 border-court-gold"><p class="text-[11px] font-semibold text-text-sub">VIP Pro</p><h4 class="text-2xl font-bold font-mono text-court-gold mt-1" id="admin-stat-vips">349</h4></div>
+        <div class="app-card p-4 border-l-4 border-emerald-500"><p class="text-[11px] font-semibold text-text-sub">Revenue</p><h4 class="text-2xl font-bold font-mono text-emerald-600 mt-1">Rp 17.1M</h4></div>
+        <div class="app-card p-4 border-l-4 border-purple-500"><p class="text-[11px] font-semibold text-text-sub">AI Engine</p><h4 class="text-2xl font-bold font-mono text-purple-600 mt-1">ONLINE</h4></div>
+      </div>
+      <div class="app-card p-5 space-y-4 overflow-hidden">
+        <div class="flex justify-between items-center">
+          <h3 class="font-display font-bold text-base flex items-center gap-2"><i class="fa-solid fa-users-gear text-action-blue"></i> Manajemen VIP</h3>
+          <span class="text-xs text-text-sub">Atur izin akses AI</span>
+        </div>
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-xs text-left">
+            <thead class="bg-slate-100 text-text-sub font-semibold uppercase">
+              <tr><th class="p-3">Pengguna / Email</th><th class="p-3">Role</th><th class="p-3">Status VIP</th><th class="p-3">Masa Aktif</th><th class="p-3">Aksi</th></tr>
+            </thead>
+            <tbody id="admin-user-table-body" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </main>
 
-  <!-- LEAGUE MODAL -->
-  <div id="league-modal" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full max-h-96 overflow-y-auto shadow-floating">
-      <div class="sticky top-0 bg-white border-b border-border-light px-6 py-4 flex items-center justify-between">
-        <h3 class="font-sora font-bold text-stat-black">Pilih Liga</h3>
-        <button onclick="closeLeagueModal()" class="text-neutral-muted hover:text-stat-black text-lg">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+  <!-- ===== MOBILE NAV ===== -->
+  <div class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-2">
+    <div class="flex justify-around items-center text-[10px] font-semibold">
+      <button id="mob-nav-scores" onclick="window.switchTab('scores')" class="mobile-nav-item active flex flex-col items-center gap-1 p-1"><i class="fa-solid fa-basketball text-base"></i><span>Live</span></button>
+      <button id="mob-nav-schedule" onclick="window.switchTab('schedule')" class="mobile-nav-item flex flex-col items-center gap-1 p-1 text-text-sub"><i class="fa-regular fa-calendar-days text-base text-action-blue"></i><span>Jadwal</span></button>
+      <button id="mob-nav-standings" onclick="window.switchTab('standings')" class="mobile-nav-item flex flex-col items-center gap-1 p-1 text-text-sub"><i class="fa-solid fa-list-ol text-base"></i><span>Klasemen</span></button>
+      <button id="mob-nav-news" onclick="window.switchTab('news')" class="mobile-nav-item flex flex-col items-center gap-1 p-1 text-text-sub"><i class="fa-regular fa-newspaper text-base text-action-blue"></i><span>Berita</span></button>
+      <button id="mob-nav-ai" onclick="window.switchTab('ai')" class="mobile-nav-item flex flex-col items-center gap-1 p-1 text-text-sub"><i class="fa-solid fa-brain text-base text-action-blue"></i><span>AI</span></button>
+      <button id="mob-nav-admin" onclick="window.switchTab('admin')" class="mobile-nav-item hidden flex flex-col items-center gap-1 p-1 text-amber-600 font-bold"><i class="fa-solid fa-user-shield text-base"></i><span>Admin</span></button>
+      <button id="mob-nav-profile" onclick="window.handleProfileNavClick()" class="mobile-nav-item flex flex-col items-center gap-1 p-1 text-text-sub"><i class="fa-solid fa-circle-user text-base"></i><span id="mob-profile-label">Profil</span></button>
+    </div>
+  </div>
+
+  <!-- ===== MODALS ===== -->
+  <!-- Auth Modal -->
+  <div id="auth-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 relative shadow-2xl border border-slate-200 animate-slide-up">
+      <button onclick="window.closeModal('auth-modal')" class="absolute top-4 right-4 text-text-sub hover:text-text-main text-sm"><i class="fa-solid fa-xmark text-lg"></i></button>
+      <div class="flex border-b border-slate-200 mb-6">
+        <button id="auth-tab-login-btn" onclick="window.switchAuthTab('login')" class="flex-1 pb-3 text-sm font-bold border-b-2 border-action-blue text-action-blue">Masuk</button>
+        <button id="auth-tab-register-btn" onclick="window.switchAuthTab('register')" class="flex-1 pb-3 text-sm font-bold border-b-2 border-transparent text-text-sub hover:text-text-main">Daftar</button>
       </div>
-      
-      <div id="league-buttons-container" class="divide-y divide-border-light">
-        <!-- Populated by JavaScript -->
+      <form id="auth-form" onsubmit="window.handleAuthSubmit(event)" class="space-y-4">
+        <div id="form-group-name" class="hidden space-y-1">
+          <label class="block text-xs font-semibold">Nama Lengkap:</label>
+          <input type="text" id="auth-fullname" placeholder="Masukkan nama Anda" class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-action-blue focus:outline-none">
+        </div>
+        <div class="space-y-1">
+          <label class="block text-xs font-semibold">Email:</label>
+          <input type="email" id="auth-email" required placeholder="nama@email.com" class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-action-blue focus:outline-none">
+        </div>
+        <div class="space-y-1">
+          <label class="block text-xs font-semibold">Password:</label>
+          <input type="password" id="auth-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 text-xs rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-action-blue focus:outline-none">
+        </div>
+        <div id="auth-error-msg" class="hidden text-xs text-rose-600 bg-rose-50 p-2.5 rounded-xl text-center font-medium"></div>
+        <button type="submit" id="auth-submit-btn" class="w-full py-3 bg-action-blue hover:bg-action-hover text-white rounded-xl font-bold text-xs active:scale-95 transition-all shadow-md shadow-action-blue/20">Masuk</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div id="profile-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 relative shadow-2xl border border-slate-200 animate-slide-up">
+      <button onclick="window.closeModal('profile-modal')" class="absolute top-4 right-4 text-text-sub hover:text-text-main text-sm"><i class="fa-solid fa-xmark text-lg"></i></button>
+      <div class="flex flex-col items-center text-center space-y-3 pb-4 border-b border-slate-200">
+        <div class="w-20 h-20 rounded-full bg-action-blue text-white text-3xl font-bold flex items-center justify-center shadow-lg shadow-action-blue/30" id="profile-avatar-icon">U</div>
+        <div><h3 class="font-display font-bold text-lg" id="profile-user-name">User</h3><p class="text-xs text-text-sub" id="profile-user-email">user@email.com</p></div>
+        <div id="profile-badge-container" class="flex items-center gap-2"></div>
+      </div>
+      <div class="py-4 space-y-3">
+        <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
+          <div class="flex justify-between"><span class="text-text-sub font-semibold">Status:</span><span class="font-bold text-action-blue" id="profile-vip-status-text">Free</span></div>
+          <div class="flex justify-between pt-1 border-t border-slate-200"><span class="text-text-sub">Berlaku:</span><span class="font-mono font-bold" id="profile-vip-expiry-text">Tidak Aktif</span></div>
+        </div>
+        <button onclick="window.openQrisModal()" class="w-full py-3 bg-gradient-to-r from-court-gold to-amber-500 text-white rounded-xl font-bold text-xs hover:brightness-110 active:scale-95 transition-all shadow-md flex items-center justify-center gap-2"><i class="fa-solid fa-crown"></i> Upgrade VIP via QRIS</button>
+        <button onclick="window.handleLogout()" class="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl font-bold text-xs active:scale-95 transition-all">Logout</button>
       </div>
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script src="api.js"></script>
-  <script src="app.js"></script>
+  <!-- QRIS Modal -->
+  <div id="qris-modal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 relative shadow-2xl border border-amber-300 text-center space-y-4 animate-slide-up">
+      <button onclick="window.closeModal('qris-modal')" class="absolute top-4 right-4 text-text-sub hover:text-text-main text-sm"><i class="fa-solid fa-xmark text-lg"></i></button>
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-court-gold font-bold text-xs"><i class="fa-solid fa-crown"></i> GaneMaX VIP Pro</div>
+      <h3 class="font-display font-extrabold text-xl" id="qris-modal-title">Pembayaran QRIS</h3>
+      <p class="text-xs text-text-sub">Scan QRIS menggunakan GoPay, OVO, DANA, ShopeePay, atau Mobile Banking.</p>
+      <div class="bg-white p-4 rounded-2xl inline-block shadow-inner mx-auto border-2 border-slate-900">
+        <div class="w-48 h-48 bg-slate-950 rounded-lg p-2 flex flex-col items-center justify-center relative">
+          <div class="grid grid-cols-5 gap-1.5 w-full h-full p-2 bg-white rounded">
+            <div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-200 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div>
+            <div class="bg-slate-900 rounded-sm"></div><div class="bg-white rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div>
+            <div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div><div class="bg-action-blue rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div>
+            <div class="bg-slate-200 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div>
+            <div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div><div class="bg-slate-900 rounded-sm"></div>
+          </div>
+          <span class="text-[9px] font-mono font-bold text-slate-900 bg-court-gold px-2 py-0.5 rounded absolute bottom-2">QRIS NPMI ID102482910</span>
+        </div>
+      </div>
+      <div><p class="text-xs font-semibold text-text-sub">Total Tagihan:</p><p class="text-2xl font-mono font-extrabold text-court-gold" id="qris-price-display">Rp 49.000</p></div>
+      <button onclick="window.simulateQrisPayment()" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2"><i class="fa-solid fa-circle-check"></i> Konfirmasi & Aktivasi</button>
+      <div class="bg-blue-50 border border-action-blue rounded-xl p-3 space-y-2">
+        <p class="text-[10px] font-bold text-action-blue">📸 INSTRUKSI:</p>
+        <p class="text-[9px] text-text-sub">1. Scan QRIS → 2. Bayar → 3. Screenshot bukti → 4. Kirim ke <a href="https://t.me/mrpangeranz" target="_blank" class="text-action-blue font-bold hover:underline">@mrpangeranz</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Match Detail Modal -->
+  <div id="match-detail-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl rounded-2xl p-6 relative shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto custom-scrollbar animate-slide-up">
+      <button onclick="window.closeModal('match-detail-modal')" class="absolute top-4 right-4 text-text-sub hover:text-text-main text-sm"><i class="fa-solid fa-xmark text-lg"></i></button>
+      <div id="match-detail-content"></div>
+    </div>
+  </div>
+
+  <!-- Team Roster Modal -->
+  <div id="team-roster-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-2xl rounded-2xl p-6 relative shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto custom-scrollbar animate-slide-up">
+      <button onclick="window.closeModal('team-roster-modal')" class="absolute top-4 right-4 text-text-sub hover:text-text-main text-sm"><i class="fa-solid fa-xmark text-lg"></i></button>
+      <div id="team-roster-content"></div>
+    </div>
+  </div>
+
 </body>
 </html>
