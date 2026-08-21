@@ -1,8 +1,8 @@
 // ============================================
-// GaneMaX Basketball - Main Application Logic
+// GaneMaX Basketball - MAIN APP (FIXED VERSION)
 // ============================================
 
-// Import from config.js
+// ===== 1. IMPORT CONFIG =====
 import {
   OPENROUTER_API_KEY,
   SUPABASE_URL,
@@ -17,16 +17,12 @@ import {
   getFormattedDateStr
 } from './config.js';
 
-// ============================================
-// 1. STATE MANAGEMENT
-// ============================================
+// ===== 2. STATE =====
 let currentLeagueSlug = 'nba';
 let currentScheduleDateStr = getFormattedDateStr(new Date());
 let standingsViewMode = 'overall';
-let memoryCache = {};
 let currentUser = JSON.parse(localStorage.getItem('ganemax_user_session')) || null;
-let authTabMode = 'login';
-let globalEventsData = [...INITIAL_INSTANT_EVENTS];
+let globalEventsData = [];
 let rawStandingsData = null;
 let currentFilter = 'all';
 let selectedQrisAmount = 49000;
@@ -35,35 +31,31 @@ let apiRequestTimestamps = [];
 let tokensUsedToday = 0;
 let aiIsLoading = false;
 
-// Supabase Client
-let supabaseClient = null;
-if (typeof supabase !== 'undefined' && SUPABASE_URL && !SUPABASE_URL.includes('xyzcompany')) {
-  try {
-    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  } catch (e) {
-    console.warn('Supabase client init failed:', e);
+// ===== 3. HELPER FUNCTIONS =====
+function isUserVipActive(user) {
+  if (!user) return false;
+  if (user?.email?.toLowerCase() === 'taufiq.pagarnusa99@gmail.com' || user?.role === 'admin') return true;
+  if (!user?.is_vip) return false;
+  if (user?.vip_expires_at) {
+    const expDate = new Date(user.vip_expires_at);
+    const now = new Date();
+    return expDate >= now;
   }
+  return user?.is_vip || false;
 }
 
-// ============================================
-// 2. API RATE LIMITING
-// ============================================
 function checkApiRateLimit() {
   const now = Date.now();
   const oneMinuteAgo = now - 60000;
   const oneHourAgo = now - 3600000;
-  
   apiRequestTimestamps = apiRequestTimestamps.filter(t => t > oneHourAgo);
-  
   const lastMinute = apiRequestTimestamps.filter(t => t > oneMinuteAgo).length;
   if (lastMinute >= API_CONFIG.MAX_REQUESTS_PER_MINUTE) {
-    throw new Error(`❌ RATE LIMIT: Max ${API_CONFIG.MAX_REQUESTS_PER_MINUTE} requests per minute. Tunggu sebentar.`);
+    throw new Error(`❌ RATE LIMIT: Max ${API_CONFIG.MAX_REQUESTS_PER_MINUTE} requests per minute.`);
   }
-  
   if (apiRequestTimestamps.length >= API_CONFIG.MAX_REQUESTS_PER_HOUR) {
-    throw new Error(`❌ RATE LIMIT: Max ${API_CONFIG.MAX_REQUESTS_PER_HOUR} requests per hour. Coba lagi 1 jam kemudian.`);
+    throw new Error(`❌ RATE LIMIT: Max ${API_CONFIG.MAX_REQUESTS_PER_HOUR} requests per hour.`);
   }
-  
   return true;
 }
 
@@ -85,155 +77,10 @@ function resetDailyTokens() {
   }
 }
 
-// ============================================
-// 3. AUTHENTICATION FUNCTIONS
-// ============================================
-function isUserVipActive(user) {
-  if (!user) return false;
-  if (user?.email?.toLowerCase() === 'taufiq.pagarnusa99@gmail.com' || user?.role === 'admin') return true;
-  if (!user?.is_vip) return false;
-
-  if (user?.vip_expires_at) {
-    const expDate = new Date(user.vip_expires_at);
-    const now = new Date();
-    return expDate >= now;
-  }
-  return user?.is_vip || false;
-}
-
-function renderAuthHeader() {
-  const container = document.getElementById('auth-header-container');
-  if (!container) return;
-
-  if (currentUser) {
-    const isSuperAdmin = currentUser?.email?.toLowerCase() === 'taufiq.pagarnusa99@gmail.com' || currentUser?.role === 'admin';
-    const isVip = isUserVipActive(currentUser);
-    const initial = currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : 'U';
-
-    container.innerHTML = `
-      <button onclick="window.openProfileModal()" class="relative w-9 h-9 rounded-full bg-action-blue text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-md hover:scale-105 active:scale-90 transition-all shrink-0" title="${currentUser?.full_name || ''}">
-        <span>${initial}</span>
-        ${isSuperAdmin 
-          ? '<span class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 rounded-full border border-slate-900 flex items-center justify-center text-[7px] text-slate-950 font-black"><i class="fa-solid fa-crown"></i></span>'
-          : (isVip ? '<span class="absolute -top-1 -right-1 w-3 h-3 bg-court-gold rounded-full border border-slate-900"></span>' : '')}
-      </button>
-    `;
-  } else {
-    container.innerHTML = `
-      <button onclick="window.openAuthModal('login')" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-text-sub hover:text-action-blue flex items-center justify-center transition-all shadow-sm shrink-0 active:scale-90" title="Masuk / Daftar Akun">
-        <i class="fa-solid fa-user-circle text-lg"></i>
-      </button>
-    `;
-  }
-
-  updateAdminNavVisibility();
-}
-
-function updateAdminNavVisibility() {
-  const isAdmin = currentUser && (currentUser?.email?.toLowerCase() === 'taufiq.pagarnusa99@gmail.com' || currentUser?.role === 'admin');
-  const navAdmin = document.getElementById('nav-admin');
-  const mobNavAdmin = document.getElementById('mob-nav-admin');
-
-  if (navAdmin) {
-    if (isAdmin) navAdmin.classList.remove('hidden');
-    else navAdmin.classList.add('hidden');
-  }
-  if (mobNavAdmin) {
-    if (isAdmin) mobNavAdmin.classList.remove('hidden');
-    else mobNavAdmin.classList.add('hidden');
-  }
-}
-
-function openAuthModal(mode = 'login') {
-  authTabMode = mode;
-  switchAuthTab(mode);
-  const modal = document.getElementById('auth-modal');
-  if (modal) modal.classList.remove('hidden');
-}
-
-function switchAuthTab(mode) {
-  authTabMode = mode;
-  const loginBtn = document.getElementById('auth-tab-login-btn');
-  const regBtn = document.getElementById('auth-tab-register-btn');
-  const nameGroup = document.getElementById('form-group-name');
-  const submitBtn = document.getElementById('auth-submit-btn');
-
-  if (mode === 'login') {
-    if (loginBtn) loginBtn.className = 'flex-1 pb-3 text-sm font-bold border-b-2 border-action-blue text-action-blue';
-    if (regBtn) regBtn.className = 'flex-1 pb-3 text-sm font-bold border-b-2 border-transparent text-text-sub hover:text-text-main';
-    if (nameGroup) nameGroup.classList.add('hidden');
-    if (submitBtn) submitBtn.textContent = 'Masuk Sekarang';
-  } else {
-    if (regBtn) regBtn.className = 'flex-1 pb-3 text-sm font-bold border-b-2 border-action-blue text-action-blue';
-    if (loginBtn) loginBtn.className = 'flex-1 pb-3 text-sm font-bold border-b-2 border-transparent text-text-sub hover:text-text-main';
-    if (nameGroup) nameGroup.classList.remove('hidden');
-    if (submitBtn) submitBtn.textContent = 'Daftar Akun Baru';
-  }
-}
-
-async function handleAuthSubmit(e) {
-  e.preventDefault();
-  const email = document.getElementById('auth-email').value.trim();
-  const password = document.getElementById('auth-password').value.trim();
-  const fullName = document.getElementById('auth-fullname')?.value.trim();
-  
-  const isSuperAdminEmail = email.toLowerCase() === 'taufiq.pagarnusa99@gmail.com';
-
-  if (isSuperAdminEmail && password !== '321') {
-    const errorMsg = document.getElementById('auth-error-msg');
-    if (errorMsg) {
-      errorMsg.textContent = "Kata sandi Super Admin salah. Silakan periksa kembali.";
-      errorMsg.classList.remove('hidden');
-    }
-    return;
-  }
-
-  let mockUsers = getMockUsersDB();
-  let existing = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
-  
-  if (!existing) {
-    existing = {
-      id: 'user-' + Date.now(),
-      email: email,
-      full_name: fullName || (isSuperAdminEmail ? 'Taufiq (Super Admin)' : email.split('@')[0]),
-      role: isSuperAdminEmail ? 'admin' : 'user',
-      is_vip: isSuperAdminEmail ? true : false,
-      vip_expires_at: isSuperAdminEmail ? '2099-12-31' : '',
-      subscription_status: isSuperAdminEmail ? 'active' : 'free'
-    };
-    mockUsers.push(existing);
-    setMockUsersDB(mockUsers);
-  } else if (isSuperAdminEmail) {
-    existing.role = 'admin';
-    existing.is_vip = true;
-    existing.vip_expires_at = '2099-12-31';
-    existing.subscription_status = 'active';
-    setMockUsersDB(mockUsers);
-  }
-
-  currentUser = existing;
-  localStorage.setItem('ganemax_user_session', JSON.stringify(currentUser));
-  closeModal('auth-modal');
-  renderAuthHeader();
-
-  if (currentUser?.role === 'admin') switchTab('admin');
-}
-
-function handleLogout() {
-  currentUser = null;
-  localStorage.removeItem('ganemax_user_session');
-  closeModal('profile-modal');
-  renderAuthHeader();
-  switchTab('scores');
-}
-
-// ============================================
-// 4. CORE RENDER FUNCTIONS
-// ============================================
+// ===== 4. RENDER FUNCTIONS =====
 function renderLeagueBadges() {
   const container = document.getElementById('league-badges-container');
   if (!container) return;
-
   container.innerHTML = LEAGUES_LIST.map(item => `
     <button onclick="window.changeLeague('${item.slug}')" id="league-badge-${item.slug}" 
       class="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:border-action-blue active:scale-95 text-xs font-bold whitespace-nowrap transition-all shadow-sm shrink-0">
@@ -241,7 +88,6 @@ function renderLeagueBadges() {
       <span>${item.name}</span>
     </button>
   `).join('');
-
   highlightActiveLeagueBadge();
 }
 
@@ -261,24 +107,20 @@ function highlightActiveLeagueBadge() {
 function renderTicker(events) {
   const container = document.getElementById('espn-ticker-container');
   if (!container) return;
-
   if (!events || events.length === 0) {
-    container.innerHTML = `<span class="text-slate-400 text-xs">Tidak ada pertandingan aktif di liga ini saat ini.</span>`;
+    container.innerHTML = `<span class="text-slate-400 text-xs">Tidak ada pertandingan aktif.</span>`;
     return;
   }
-
-  container.innerHTML = events.map(event => {
+  container.innerHTML = events.slice(0, 10).map(event => {
     const comp = event?.competitions?.[0];
     if (!comp) return '';
     const home = comp?.competitors?.find(c => c.homeAway === 'home');
     const away = comp?.competitors?.find(c => c.homeAway === 'away');
     const isLive = event?.status?.type?.state === 'in';
     const isFinal = event?.status?.type?.state === 'post';
-    
     const statusText = isLive 
       ? `<span class="text-live-red text-[10px] font-bold animate-pulse">${event?.status?.type?.shortDetail || 'LIVE'}</span>` 
       : (isFinal ? `<span class="text-slate-400 text-[10px]">FINAL</span>` : `<span class="text-action-blue text-[10px] font-mono">${event?.status?.type?.shortDetail || 'SCHEDULED'}</span>`);
-
     return `
       <div onclick="window.openMatchDetail('${event.id}')" class="bg-slate-800 hover:bg-slate-700 cursor-pointer px-3 py-1.5 rounded-xl border border-slate-700 flex items-center gap-3 whitespace-nowrap transition-all shrink-0 active:scale-95">
         <span class="font-bold flex items-center gap-1.5">
@@ -297,11 +139,14 @@ function renderTicker(events) {
 
 function renderHeroCard(heroEvent) {
   const container = document.getElementById('hero-card-content');
-  if (!container || !heroEvent) return;
-
+  if (!container) return;
+  if (!heroEvent) {
+    container.innerHTML = `<div class="text-center py-8 text-xs text-text-sub">Tidak ada pertandingan.</div>`;
+    return;
+  }
   const comp = heroEvent?.competitions?.[0];
   if (!comp) {
-    container.innerHTML = `<div class="text-center py-8 text-xs text-text-sub">Tidak ada pertandingan yang ditampilkan.</div>`;
+    container.innerHTML = `<div class="text-center py-8 text-xs text-text-sub">Data pertandingan tidak lengkap.</div>`;
     return;
   }
   const home = comp?.competitors?.find(c => c.homeAway === 'home');
@@ -319,7 +164,6 @@ function renderHeroCard(heroEvent) {
       </div>
       <span class="text-xs font-mono font-bold text-action-blue shrink-0">${detailStatus}</span>
     </div>
-
     <div class="grid grid-cols-12 items-center gap-2 sm:gap-4 py-2">
       <div class="col-span-4 flex flex-col items-center sm:items-start text-center sm:text-left min-w-0">
         <div class="flex items-center gap-2 sm:gap-3 w-full">
@@ -330,7 +174,6 @@ function renderHeroCard(heroEvent) {
           </div>
         </div>
       </div>
-
       <div class="col-span-4 flex flex-col items-center justify-center text-center shrink-0">
         <div class="flex items-center justify-center gap-2 sm:gap-4 font-mono font-extrabold text-xl sm:text-4xl tracking-tight text-text-main">
           <span class="text-action-blue">${away?.score || '0'}</span>
@@ -341,7 +184,6 @@ function renderHeroCard(heroEvent) {
           <i class="fa-solid fa-chart-line"></i> Boxscore Detail
         </button>
       </div>
-
       <div class="col-span-4 flex flex-col items-center sm:items-end text-center sm:text-right min-w-0">
         <div class="flex flex-row-reverse sm:flex-row items-center gap-2 sm:gap-3 w-full justify-end">
           <div class="min-w-0 flex-1">
@@ -358,17 +200,14 @@ function renderHeroCard(heroEvent) {
 function renderMatchCards(events) {
   const container = document.getElementById('match-cards-container');
   if (!container) return;
-
   let filtered = events || [];
   if (currentFilter !== 'all') {
     filtered = filtered.filter(e => e?.status?.type?.state === currentFilter);
   }
-
   if (filtered.length === 0) {
     container.innerHTML = `<div class="col-span-3 text-center py-8 text-text-sub text-xs">Tidak ada pertandingan dalam kategori ini.</div>`;
     return;
   }
-
   container.innerHTML = filtered.map(event => {
     const comp = event?.competitions?.[0];
     if (!comp) return '';
@@ -376,18 +215,15 @@ function renderMatchCards(events) {
     const away = comp?.competitors?.find(c => c.homeAway === 'away');
     const isLive = event?.status?.type?.state === 'in';
     const isFinal = event?.status?.type?.state === 'post';
-
     const statusBadge = isLive 
       ? `<span class="px-2.5 py-0.5 rounded-full bg-rose-50 text-live-red border border-rose-200 font-bold text-[10px] animate-pulse">${event?.status?.type?.shortDetail || 'LIVE'}</span>` 
       : (isFinal ? `<span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold text-[10px]">FINAL</span>` : `<span class="px-2.5 py-0.5 rounded-full bg-soft-blue text-action-blue font-bold text-[10px]">${event?.status?.type?.shortDetail || 'SCHEDULED'}</span>`);
-
     return `
       <div class="app-card p-4 hover:border-action-blue cursor-pointer relative active:scale-95 transition-all" onclick="window.openMatchDetail('${event.id}')">
         <div class="flex justify-between items-center text-xs mb-3 pb-2 border-b border-slate-100">
           <span class="text-text-sub font-semibold flex items-center gap-1.5"><i class="fa-solid fa-trophy text-court-gold"></i> ${event?.leagueName || event?.season?.slug || currentLeagueSlug.toUpperCase()}</span>
           ${statusBadge}
         </div>
-
         <div class="space-y-2.5">
           <div class="flex justify-between items-center gap-2">
             <div class="flex items-center gap-2.5 min-w-0">
@@ -396,7 +232,6 @@ function renderMatchCards(events) {
             </div>
             <span class="font-mono font-extrabold text-base text-action-blue shrink-0">${away?.score || '--'}</span>
           </div>
-
           <div class="flex justify-between items-center gap-2">
             <div class="flex items-center gap-2.5 min-w-0">
               <img src="${home?.team?.logo || ''}" onerror="this.onerror=null; this.src='https://a.espncdn.com/combiner/i?img=/i/teamlogos/leagues/500/nba.png';" class="w-7 h-7 object-contain shrink-0">
@@ -405,7 +240,6 @@ function renderMatchCards(events) {
             <span class="font-mono font-extrabold text-base text-text-main shrink-0">${home?.score || '--'}</span>
           </div>
         </div>
-
         <div class="mt-3 pt-2 border-t border-slate-100 flex justify-between items-center text-[11px] text-text-sub">
           <span class="truncate max-w-[180px]"><i class="fa-solid fa-location-dot me-1"></i> ${comp?.venue?.fullName || 'Arena'}</span>
           <span class="text-action-blue font-semibold shrink-0">Boxscore <i class="fa-solid fa-chevron-right text-[9px]"></i></span>
@@ -415,38 +249,54 @@ function renderMatchCards(events) {
   }).join('');
 }
 
-// ============================================
-// 5. CORE APPLICATION FUNCTIONS
-// ============================================
-function changeLeague(newSlug) {
-  currentLeagueSlug = newSlug;
-  highlightActiveLeagueBadge();
-
-  const currentLeagueObj = LEAGUES_LIST.find(l => l.slug === newSlug);
-  const name = currentLeagueObj ? currentLeagueObj.name : newSlug.toUpperCase();
-
-  const badge = document.getElementById('active-league-badge-text');
-  if (badge) badge.textContent = `GaneMaX Live: ${name}`;
-  
-  const tickerLabel = document.getElementById('ticker-league-label');
-  if (tickerLabel) tickerLabel.innerHTML = `<i class="fa-solid fa-bolt text-court-gold animate-pulse"></i> ${name.toUpperCase()} LIVE TICKER`;
-
-  refreshCurrentLeagueData(false);
+function renderAuthHeader() {
+  const container = document.getElementById('auth-header-container');
+  if (!container) return;
+  if (currentUser) {
+    const isSuperAdmin = currentUser?.email?.toLowerCase() === 'taufiq.pagarnusa99@gmail.com' || currentUser?.role === 'admin';
+    const isVip = isUserVipActive(currentUser);
+    const initial = currentUser?.full_name ? currentUser.full_name.charAt(0).toUpperCase() : 'U';
+    container.innerHTML = `
+      <button onclick="window.openProfileModal()" class="relative w-9 h-9 rounded-full bg-action-blue text-white font-bold text-xs flex items-center justify-center border-2 border-white shadow-md hover:scale-105 active:scale-90 transition-all shrink-0" title="${currentUser?.full_name || ''}">
+        <span>${initial}</span>
+        ${isSuperAdmin 
+          ? '<span class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 rounded-full border border-slate-900 flex items-center justify-center text-[7px] text-slate-950 font-black"><i class="fa-solid fa-crown"></i></span>'
+          : (isVip ? '<span class="absolute -top-1 -right-1 w-3 h-3 bg-court-gold rounded-full border border-slate-900"></span>' : '')}
+      </button>
+    `;
+  } else {
+    container.innerHTML = `
+      <button onclick="window.openAuthModal('login')" class="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200 text-text-sub hover:text-action-blue flex items-center justify-center transition-all shadow-sm shrink-0 active:scale-90" title="Masuk / Daftar Akun">
+        <i class="fa-solid fa-user-circle text-lg"></i>
+      </button>
+    `;
+  }
+  updateAdminNavVisibility();
 }
 
-function refreshCurrentLeagueData(showSpinner = false) {
-  fetchEspnScoreboard(showSpinner);
-  fetchEspnNews();
-  fetchEspnStandings();
+function updateAdminNavVisibility() {
+  const isAdmin = currentUser && (currentUser?.email?.toLowerCase() === 'taufiq.pagarnusa99@gmail.com' || currentUser?.role === 'admin');
+  const navAdmin = document.getElementById('nav-admin');
+  const mobNavAdmin = document.getElementById('mob-nav-admin');
+  if (navAdmin) {
+    if (isAdmin) navAdmin.classList.remove('hidden');
+    else navAdmin.classList.add('hidden');
+  }
+  if (mobNavAdmin) {
+    if (isAdmin) mobNavAdmin.classList.remove('hidden');
+    else mobNavAdmin.classList.add('hidden');
+  }
 }
+
+// ===== 5. CORE FUNCTIONS (EXPOSED TO WINDOW) =====
 
 function switchTab(tabName) {
+  console.log('switchTab called:', tabName);
   const tabs = ['scores', 'schedule', 'standings', 'news', 'teams', 'ai', 'injuries', 'transactions', 'admin'];
   tabs.forEach(t => {
     const el = document.getElementById(`tab-${t}`);
     const navEl = document.getElementById(`nav-${t}`);
     const mobNavEl = document.getElementById(`mob-nav-${t}`);
-    
     if (el) el.classList.add('hidden');
     if (navEl) {
       navEl.classList.remove('tab-btn-active');
@@ -454,16 +304,13 @@ function switchTab(tabName) {
     }
     if (mobNavEl) mobNavEl.classList.remove('active');
   });
-
   const targetTab = document.getElementById(`tab-${tabName}`);
   if (targetTab) targetTab.classList.remove('hidden');
-
   const targetNav = document.getElementById(`nav-${tabName}`);
   if (targetNav) {
     targetNav.classList.add('tab-btn-active');
     targetNav.classList.remove('text-text-sub');
   }
-
   const targetMobNav = document.getElementById(`mob-nav-${tabName}`);
   if (targetMobNav) targetMobNav.classList.add('active');
 
@@ -479,7 +326,6 @@ function switchTab(tabName) {
     }
   }
 
-  // Tab-specific actions
   if (tabName === 'scores') fetchAllLeaguesScoreboard();
   if (tabName === 'ai') checkAiAccessPermission();
   if (tabName === 'schedule') fetchEspnSchedule(currentScheduleDateStr);
@@ -487,6 +333,24 @@ function switchTab(tabName) {
   if (tabName === 'injuries') fetchEspnInjuries();
   if (tabName === 'transactions') fetchEspnTransactions();
   if (tabName === 'standings') fetchEspnStandings();
+}
+
+function changeLeague(newSlug) {
+  currentLeagueSlug = newSlug;
+  highlightActiveLeagueBadge();
+  const currentLeagueObj = LEAGUES_LIST.find(l => l.slug === newSlug);
+  const name = currentLeagueObj ? currentLeagueObj.name : newSlug.toUpperCase();
+  const badge = document.getElementById('active-league-badge-text');
+  if (badge) badge.textContent = `GaneMaX Live: ${name}`;
+  const tickerLabel = document.getElementById('ticker-league-label');
+  if (tickerLabel) tickerLabel.innerHTML = `<i class="fa-solid fa-bolt text-court-gold animate-pulse"></i> ${name.toUpperCase()} LIVE TICKER`;
+  refreshCurrentLeagueData(false);
+}
+
+function refreshCurrentLeagueData(showSpinner = false) {
+  fetchEspnScoreboard(showSpinner);
+  fetchEspnNews();
+  fetchEspnStandings();
 }
 
 function filterMatchCategory(cat) {
@@ -504,13 +368,11 @@ function filterMatchCategory(cat) {
   renderMatchCards(globalEventsData);
 }
 
-// ============================================
-// 6. FETCH FUNCTIONS
-// ============================================
+// ===== 6. FETCH FUNCTIONS =====
+
 async function fetchAllLeaguesScoreboard() {
   const refreshIcon = document.getElementById('api-refresh-icon');
   if (refreshIcon) refreshIcon.classList.add('animate-spin');
-
   try {
     const allEvents = [];
     const fetchPromises = LEAGUES_LIST.map(league => 
@@ -528,24 +390,28 @@ async function fetchAllLeaguesScoreboard() {
         })
         .catch(() => [])
     );
-
     const results = await Promise.all(fetchPromises);
     const combinedEvents = results.flat();
-
     combinedEvents.sort((a, b) => {
       const stateOrder = { 'in': 0, 'pre': 1, 'post': 2 };
       const stateA = a?.status?.type?.state || 'post';
       const stateB = b?.status?.type?.state || 'post';
       return (stateOrder[stateA] || 2) - (stateOrder[stateB] || 2);
     });
-
     if (combinedEvents.length > 0) {
       globalEventsData = combinedEvents;
       renderTicker(globalEventsData);
       renderHeroCard(globalEventsData[0]);
       renderMatchCards(globalEventsData);
+    } else {
+      // Jika kosong, gunakan data awal
+      if (globalEventsData.length === 0) {
+        globalEventsData = INITIAL_INSTANT_EVENTS;
+        renderTicker(globalEventsData);
+        renderHeroCard(globalEventsData[0]);
+        renderMatchCards(globalEventsData);
+      }
     }
-
     const liveHeader = document.getElementById('live-status-header-text');
     if (liveHeader) {
       const liveCount = combinedEvents.filter(e => e?.status?.type?.state === 'in').length;
@@ -553,6 +419,13 @@ async function fetchAllLeaguesScoreboard() {
     }
   } catch (error) {
     console.error('Error fetching all leagues:', error);
+    // Fallback ke data awal
+    if (globalEventsData.length === 0) {
+      globalEventsData = INITIAL_INSTANT_EVENTS;
+      renderTicker(globalEventsData);
+      renderHeroCard(globalEventsData[0]);
+      renderMatchCards(globalEventsData);
+    }
   } finally {
     if (refreshIcon) refreshIcon.classList.remove('animate-spin');
   }
@@ -561,12 +434,10 @@ async function fetchAllLeaguesScoreboard() {
 async function fetchEspnScoreboard(showSpinner = false) {
   const refreshIcon = document.getElementById('api-refresh-icon');
   if (showSpinner && refreshIcon) refreshIcon.classList.add('animate-spin');
-
   try {
     const response = await fetch(getEspnUrl.scoreboard(currentLeagueSlug));
     if (!response.ok) throw new Error('API Error');
     const data = await response.json();
-
     if (data.events && data.events.length > 0) {
       const enrichedEvents = data.events.map(event => ({
         ...event,
@@ -577,8 +448,15 @@ async function fetchEspnScoreboard(showSpinner = false) {
       renderTicker(globalEventsData);
       renderHeroCard(globalEventsData[0]);
       renderMatchCards(globalEventsData);
+    } else {
+      // Jika tidak ada event, gunakan data awal
+      if (globalEventsData.length === 0) {
+        globalEventsData = INITIAL_INSTANT_EVENTS;
+        renderTicker(globalEventsData);
+        renderHeroCard(globalEventsData[0]);
+        renderMatchCards(globalEventsData);
+      }
     }
-
     const liveHeader = document.getElementById('live-status-header-text');
     if (liveHeader) {
       const liveCount = globalEventsData.filter(e => e?.status?.type?.state === 'in').length;
@@ -586,23 +464,26 @@ async function fetchEspnScoreboard(showSpinner = false) {
     }
   } catch (error) {
     console.error('Error fetching scoreboard:', error);
+    if (globalEventsData.length === 0) {
+      globalEventsData = INITIAL_INSTANT_EVENTS;
+      renderTicker(globalEventsData);
+      renderHeroCard(globalEventsData[0]);
+      renderMatchCards(globalEventsData);
+    }
   } finally {
     if (refreshIcon) refreshIcon.classList.remove('animate-spin');
   }
 }
 
-// ============================================
-// 7. SCHEDULE, STANDINGS, NEWS, TEAMS, INJURIES, TRANSACTIONS
-// ============================================
+// ===== 7. SCHEDULE, STANDINGS, NEWS, TEAMS, ETC =====
+
 function setScheduleDate(type) {
   const now = new Date();
   let targetDate = new Date();
-
   ['yesterday', 'today', 'tomorrow', 'nextday'].forEach(t => {
     const b = document.getElementById(`sched-date-${t}`);
     if (b) b.className = "px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-200 hover:bg-slate-100 active:scale-95 transition-all whitespace-nowrap";
   });
-
   if (type === 'yesterday') {
     targetDate.setDate(now.getDate() - 1);
     const btn = document.getElementById('sched-date-yesterday');
@@ -626,7 +507,6 @@ function setScheduleDate(type) {
       targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
     }
   }
-
   currentScheduleDateStr = getFormattedDateStr(targetDate);
   fetchEspnSchedule(currentScheduleDateStr);
 }
@@ -635,16 +515,13 @@ async function fetchEspnSchedule(dateStr = currentScheduleDateStr) {
   const container = document.getElementById('schedule-list-container');
   const subtitle = document.getElementById('schedule-league-subtitle');
   if (!container) return;
-
   const leagueObj = LEAGUES_LIST.find(l => l.slug === currentLeagueSlug);
   const leagueName = leagueObj ? leagueObj.name : currentLeagueSlug.toUpperCase();
   if (subtitle) subtitle.textContent = `Jadwal resmi pertandingan ${leagueName} (${dateStr}).`;
-
   try {
     const res = await fetch(getEspnUrl.scoreboard(currentLeagueSlug, dateStr));
     const data = await res.json();
     const events = data.events || [];
-
     if (events.length === 0) {
       container.innerHTML = `
         <div class="text-center py-8 text-xs text-text-sub bg-slate-50 rounded-2xl border border-slate-200 p-4">
@@ -655,7 +532,6 @@ async function fetchEspnSchedule(dateStr = currentScheduleDateStr) {
       `;
       return;
     }
-
     container.innerHTML = events.map(event => {
       const comp = event?.competitions?.[0];
       if (!comp) return '';
@@ -663,7 +539,6 @@ async function fetchEspnSchedule(dateStr = currentScheduleDateStr) {
       const away = comp?.competitors?.find(c => c.homeAway === 'away');
       const statusText = event?.status?.type?.shortDetail || 'SCHEDULED';
       const venue = comp?.venue?.fullName || 'Arena';
-
       return `
         <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 hover:border-action-blue transition-all flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div class="flex items-center gap-3 w-full sm:w-auto">
@@ -680,7 +555,6 @@ async function fetchEspnSchedule(dateStr = currentScheduleDateStr) {
               </span>
             </div>
           </div>
-
           <div class="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-0 border-slate-200">
             <span class="text-text-sub text-[11px] truncate"><i class="fa-solid fa-location-dot me-1"></i> ${venue}</span>
             <button onclick="window.setAiPrompt('Analisis prediksi jadwal ${away?.team?.displayName || ''} vs ${home?.team?.displayName || ''}'); window.switchTab('ai');" class="px-3 py-1 rounded-xl bg-action-blue text-white font-bold text-[10px] hover:bg-action-hover active:scale-95 transition-all shrink-0">
@@ -695,14 +569,10 @@ async function fetchEspnSchedule(dateStr = currentScheduleDateStr) {
   }
 }
 
-// ============================================
-// 8. STANDINGS
-// ============================================
 function setStandingsViewMode(mode) {
   standingsViewMode = mode;
   const btnOverall = document.getElementById('btn-standings-overall');
   const btnDivided = document.getElementById('btn-standings-divided');
-
   if (mode === 'overall') {
     if (btnOverall) btnOverall.className = "flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold bg-action-blue text-white shadow-sm transition-all active:scale-95";
     if (btnDivided) btnDivided.className = "flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-medium text-text-sub hover:text-text-main transition-all active:scale-95";
@@ -710,7 +580,6 @@ function setStandingsViewMode(mode) {
     if (btnDivided) btnDivided.className = "flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold bg-action-blue text-white shadow-sm transition-all active:scale-95";
     if (btnOverall) btnOverall.className = "flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-medium text-text-sub hover:text-text-main transition-all active:scale-95";
   }
-
   if (rawStandingsData) {
     renderStandingsFromData(rawStandingsData);
   }
@@ -720,11 +589,9 @@ async function fetchEspnStandings() {
   const container = document.getElementById('standings-sections-container');
   const titleText = document.getElementById('standings-title-text');
   if (!container) return;
-
   const leagueObj = LEAGUES_LIST.find(l => l.slug === currentLeagueSlug);
   const leagueName = leagueObj ? leagueObj.name : currentLeagueSlug.toUpperCase();
   if (titleText) titleText.textContent = `Klasemen ${leagueName} Season Realtime`;
-
   try {
     const res = await fetch(getEspnUrl.standings(currentLeagueSlug));
     const data = await res.json();
@@ -738,18 +605,14 @@ async function fetchEspnStandings() {
 function renderStandingsFromData(data) {
   const container = document.getElementById('standings-sections-container');
   if (!container) return;
-
   const leagueObj = LEAGUES_LIST.find(l => l.slug === currentLeagueSlug);
   const leagueName = leagueObj ? leagueObj.name : currentLeagueSlug.toUpperCase();
-
   let sections = [];
   let allTeamsEntries = [];
-
   if (data?.children && data.children.length > 0) {
     data.children.forEach(child => {
       const confName = child.name || child.abbreviation || 'Conference';
       let confEntries = [];
-
       if (child?.standings?.entries) {
         confEntries = child.standings.entries;
       } else if (child?.children && child.children.length > 0) {
@@ -759,7 +622,6 @@ function renderStandingsFromData(data) {
           }
         });
       }
-
       if (confEntries.length > 0) {
         sections.push({ title: confName, entries: confEntries });
         allTeamsEntries.push(...confEntries);
@@ -769,28 +631,23 @@ function renderStandingsFromData(data) {
     sections.push({ title: 'Overall Standings', entries: data.standings.entries });
     allTeamsEntries = data.standings.entries;
   }
-
   if (allTeamsEntries.length === 0) {
     container.innerHTML = `<div class="p-6 text-center text-xs text-text-sub bg-slate-50 rounded-2xl border border-slate-200">Data klasemen belum tersedia untuk liga ${leagueName}.</div>`;
     return;
   }
-
   if (standingsViewMode === 'overall') {
     const uniqueTeamsMap = new Map();
     allTeamsEntries.forEach(entry => {
       if (entry?.team?.id) uniqueTeamsMap.set(entry.team.id, entry);
     });
-
     const sortedOverallTeams = Array.from(uniqueTeamsMap.values()).sort((a, b) => {
       const pctA = parseFloat(a?.stats?.find(s => s.name === 'winPercent')?.value || 0);
       const pctB = parseFloat(b?.stats?.find(s => s.name === 'winPercent')?.value || 0);
       const winsA = parseInt(a?.stats?.find(s => s.name === 'wins')?.value || 0);
       const winsB = parseInt(b?.stats?.find(s => s.name === 'wins')?.value || 0);
-
       if (pctB !== pctA) return pctB - pctA;
       return winsB - winsA;
     });
-
     container.innerHTML = `
       <div class="space-y-3">
         <div class="flex justify-between items-center bg-slate-100 p-3 rounded-xl border border-slate-200">
@@ -799,18 +656,10 @@ function renderStandingsFromData(data) {
           </h4>
           <span class="text-[10px] text-text-sub font-mono font-semibold">${sortedOverallTeams.length} Total Tim</span>
         </div>
-
         <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
           <table class="w-full text-xs text-left">
             <thead class="bg-slate-50 text-text-sub font-semibold uppercase border-b border-slate-200">
-              <tr>
-                <th class="p-3">Pos / Tim</th>
-                <th class="p-3 text-center">M (W)</th>
-                <th class="p-3 text-center">K (L)</th>
-                <th class="p-3 text-center">PCT</th>
-                <th class="p-3 text-center">GB</th>
-                <th class="p-3 text-center">STRK</th>
-              </tr>
+              <tr><th class="p-3">Pos / Tim</th><th class="p-3 text-center">M (W)</th><th class="p-3 text-center">K (L)</th><th class="p-3 text-center">PCT</th><th class="p-3 text-center">GB</th><th class="p-3 text-center">STRK</th></tr>
             </thead>
             <tbody class="divide-y divide-slate-100 bg-white">
               ${sortedOverallTeams.map((entry, idx) => {
@@ -821,7 +670,6 @@ function renderStandingsFromData(data) {
                 const pct = stats.find(s => s.name === 'winPercent')?.displayValue || '.000';
                 const gb = stats.find(s => s.name === 'gamesBehind')?.displayValue || '-';
                 const streak = stats.find(s => s.name === 'streak')?.displayValue || '-';
-
                 return `
                   <tr class="hover:bg-slate-50 transition-colors">
                     <td class="p-3 font-bold flex items-center gap-2.5 text-text-main min-w-[180px]">
@@ -844,8 +692,6 @@ function renderStandingsFromData(data) {
     `;
     return;
   }
-
-  // Divided Mode
   container.innerHTML = sections.map(sec => `
     <div class="space-y-3">
       <div class="flex justify-between items-center bg-slate-100 p-3 rounded-xl border border-slate-200">
@@ -854,18 +700,10 @@ function renderStandingsFromData(data) {
         </h4>
         <span class="text-[10px] text-text-sub font-mono font-semibold">${sec.entries.length} Tim</span>
       </div>
-
       <div class="overflow-x-auto custom-scrollbar border border-slate-200 rounded-xl">
         <table class="w-full text-xs text-left">
           <thead class="bg-slate-50 text-text-sub font-semibold uppercase border-b border-slate-200">
-            <tr>
-              <th class="p-3">Pos / Tim</th>
-              <th class="p-3 text-center">M (W)</th>
-              <th class="p-3 text-center">K (L)</th>
-              <th class="p-3 text-center">PCT</th>
-              <th class="p-3 text-center">GB</th>
-              <th class="p-3 text-center">STRK</th>
-            </tr>
+            <tr><th class="p-3">Pos / Tim</th><th class="p-3 text-center">M (W)</th><th class="p-3 text-center">K (L)</th><th class="p-3 text-center">PCT</th><th class="p-3 text-center">GB</th><th class="p-3 text-center">STRK</th></tr>
           </thead>
           <tbody class="divide-y divide-slate-100 bg-white">
             ${sec.entries.map((entry, idx) => {
@@ -876,7 +714,6 @@ function renderStandingsFromData(data) {
               const pct = stats.find(s => s.name === 'winPercent')?.displayValue || '.000';
               const gb = stats.find(s => s.name === 'gamesBehind')?.displayValue || '-';
               const streak = stats.find(s => s.name === 'streak')?.displayValue || '-';
-
               return `
                 <tr class="hover:bg-slate-50 transition-colors">
                   <td class="p-3 font-bold flex items-center gap-2.5 text-text-main min-w-[180px]">
@@ -899,23 +736,19 @@ function renderStandingsFromData(data) {
   `).join('');
 }
 
-// ============================================
-// 9. NEWS, TEAMS, INJURIES, TRANSACTIONS
-// ============================================
+// ===== 8. NEWS, TEAMS, INJURIES, TRANSACTIONS =====
+
 async function fetchEspnNews() {
   const container = document.getElementById('espn-news-container');
   if (!container) return;
-
   try {
     const res = await fetch(getEspnUrl.news(currentLeagueSlug));
     const data = await res.json();
     const articles = data.articles || [];
-
     if (articles.length === 0) {
-      container.innerHTML = `<div class="col-span-3 text-center py-6 text-xs text-text-sub">Belum ada berita terbaru untuk liga ini.</div>`;
+      container.innerHTML = `<div class="col-span-3 text-center py-6 text-xs text-text-sub">Belum ada berita terbaru.</div>`;
       return;
     }
-
     container.innerHTML = articles.slice(0, 6).map((art, idx) => `
       <div class="app-card p-4 flex flex-col justify-between ${idx === 0 ? 'md:col-span-2' : ''}" id="news-card-${idx}">
         <div>
@@ -926,7 +759,7 @@ async function fetchEspnNews() {
         </div>
         <div class="space-y-2">
           <div class="flex justify-between items-center text-[11px] text-text-sub border-t border-slate-100 pt-2">
-            <span>${art.published ? new Date(art.published).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) + ' WIB' : ''}</span>
+            <span>${art.published ? new Date(art.published).toLocaleTimeString('id-ID', {hour:'2-digit',minute:'2-digit'}) + ' WIB' : ''}</span>
             <a href="${art?.links?.web?.href || '#'}" target="_blank" class="text-action-blue font-bold hover:underline">Baca <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></a>
           </div>
           <button type="button" class="translate-news-btn w-full py-1.5 bg-soft-blue hover:bg-action-blue/10 text-action-blue rounded-lg font-bold text-[10px] active:scale-95 transition-all flex items-center justify-center gap-1 border border-action-blue/20" data-card-idx="${idx}">
@@ -935,24 +768,16 @@ async function fetchEspnNews() {
         </div>
       </div>
     `).join('');
-    
     document.querySelectorAll('.translate-news-btn').forEach((btn) => {
       btn.addEventListener('click', async function(e) {
         e.preventDefault();
         e.stopPropagation();
-        
         const cardIdx = this.dataset.cardIdx;
         const headlineEl = document.querySelector(`.news-headline-${cardIdx}`);
         const descEl = document.querySelector(`.news-desc-${cardIdx}`);
-        
-        if (!headlineEl || !descEl) {
-          alert('❌ Error: Card elements tidak ditemukan.');
-          return;
-        }
-        
+        if (!headlineEl || !descEl) return;
         const headline = headlineEl.textContent.trim();
         const description = descEl.textContent.trim();
-        
         await translateNewsArticle(cardIdx, headline, description, this);
       });
     });
@@ -964,17 +789,14 @@ async function fetchEspnNews() {
 async function fetchEspnTeams() {
   const container = document.getElementById('espn-teams-container');
   if (!container) return;
-
   try {
     const res = await fetch(getEspnUrl.teams(currentLeagueSlug));
     const data = await res.json();
     const teams = data?.sports?.[0]?.leagues?.[0]?.teams || [];
-
     if (teams.length === 0) {
-      container.innerHTML = `<div class="col-span-5 text-center py-6 text-xs text-text-sub">Tidak ada tim terdaftar di liga ini.</div>`;
+      container.innerHTML = `<div class="col-span-5 text-center py-6 text-xs text-text-sub">Tidak ada tim terdaftar.</div>`;
       return;
     }
-
     container.innerHTML = teams.map(item => {
       const t = item.team;
       return `
@@ -994,15 +816,12 @@ async function inspectTeamRoster(teamId, teamName) {
   const modal = document.getElementById('team-roster-modal');
   const content = document.getElementById('team-roster-content');
   if (!modal || !content) return;
-
   modal.classList.remove('hidden');
   content.innerHTML = `<div class="py-12 text-center text-xs"><i class="fa-solid fa-spinner animate-spin text-2xl text-purple-600 mb-2"></i><p>Memuat Roster Pemain ${teamName}...</p></div>`;
-
   try {
     const res = await fetch(getEspnUrl.teamRoster(teamId, currentLeagueSlug));
     const data = await res.json();
     const athletes = data.athletes || [];
-
     content.innerHTML = `
       <div class="space-y-4">
         <div class="pb-3 border-b border-slate-200 flex justify-between items-center">
@@ -1012,7 +831,6 @@ async function inspectTeamRoster(teamId, teamName) {
           </div>
           <span class="px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold">${athletes.length} Pemain</span>
         </div>
-
         <div class="space-y-2">
           ${athletes.map(a => `
             <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between items-center text-xs">
@@ -1037,17 +855,14 @@ async function inspectTeamRoster(teamId, teamName) {
 async function fetchEspnInjuries() {
   const container = document.getElementById('espn-injuries-container');
   if (!container) return;
-
   try {
     const res = await fetch(getEspnUrl.injuries(currentLeagueSlug));
     const data = await res.json();
     const injuries = data.injuries || [];
-
     if (injuries.length === 0) {
-      container.innerHTML = `<div class="text-center py-6 text-xs text-text-sub">Tidak ada laporan cedera aktif saat ini.</div>`;
+      container.innerHTML = `<div class="text-center py-6 text-xs text-text-sub">Tidak ada laporan cedera aktif.</div>`;
       return;
     }
-
     container.innerHTML = injuries.slice(0, 10).map(inj => `
       <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex justify-between items-center text-xs">
         <div>
@@ -1066,17 +881,14 @@ async function fetchEspnInjuries() {
 async function fetchEspnTransactions() {
   const container = document.getElementById('espn-transactions-container');
   if (!container) return;
-
   try {
     const res = await fetch(getEspnUrl.transactions(currentLeagueSlug));
     const data = await res.json();
     const transactions = data.transactions || [];
-
     if (transactions.length === 0) {
       container.innerHTML = `<div class="text-center py-6 text-xs text-text-sub">Belum ada transaksi resmi tercatat.</div>`;
       return;
     }
-
     container.innerHTML = transactions.slice(0, 10).map(tr => `
       <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs space-y-1">
         <div class="flex justify-between items-center text-text-sub text-[10px]">
@@ -1091,9 +903,8 @@ async function fetchEspnTransactions() {
   }
 }
 
-// ============================================
-// 10. AI FUNCTIONALITY
-// ============================================
+// ===== 9. AI FUNCTIONS =====
+
 function setAiPrompt(text) {
   const input = document.getElementById('ai-prompt-input');
   if (input) {
@@ -1107,16 +918,13 @@ async function runAiPrediction() {
     alert('⏳ GaneMaX.ai sedang menganalisis. Tunggu sebentar...');
     return;
   }
-
   const promptInput = document.getElementById('ai-prompt-input');
   const responseBox = document.getElementById('ai-response-box');
   const text = promptInput?.value?.trim();
-
   if (!text || text.length < 5) {
     alert('❌ Tulis prompt minimal 5 karakter!');
     return;
   }
-
   try {
     resetDailyTokens();
     checkApiRateLimit();
@@ -1127,7 +935,6 @@ async function runAiPrediction() {
     alert(err.message);
     return;
   }
-
   aiIsLoading = true;
   if (responseBox) {
     responseBox.classList.remove('hidden');
@@ -1138,26 +945,10 @@ async function runAiPrediction() {
       </div>
     `;
   }
-
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000);
-
-    const systemPrompt = `Anda adalah GaneMaX.ai - Analis Basketball Profesional yang memberikan analisis REAL dan AKURAT tentang basketball.
-
-INSTRUKSI ANALISIS:
-1. Prediksi Skor: Breakdown per kuartal dengan reasoning
-2. Win Probability: Based on head-to-head, stats, matchups
-3. Key Matchups: Analisis posisi spesifik (G, F, C)
-4. Strategi Taktis: Apa yg perlu dilakukan setiap tim
-5. Risk Factors: Injuries, foul trouble, momentum
-6. Fantasy Picks: Pemain terbaik jika diminta
-7. Over/Under: Prediksi total poin dengan analisis
-
-PENTING: GUNAKAN LOGIKA BASKETBALL & DATA, BUKAN SPEKULASI.
-BAHASA: Bahasa Indonesia professional, ringkas, bullet points.
-FORMAT: Mudah dibaca, structure jelas, actionable insights.`;
-
+    const systemPrompt = `Anda adalah GaneMaX.ai - Analis Basketball Profesional. Berikan analisis REAL dan AKURAT. Gunakan Bahasa Indonesia, bullet points, struktur jelas.`;
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -1177,30 +968,20 @@ FORMAT: Mudah dibaca, structure jelas, actionable insights.`;
       }),
       signal: controller.signal
     });
-
     clearTimeout(timeoutId);
-
     if (!response.ok) {
       const errorData = await response.text();
       let msg = `❌ API Error ${response.status}`;
-      
       if (response.status === 402) msg = '❌ API Credit habis. Hubungi admin.';
       else if (response.status === 401) msg = '❌ API Key invalid.';
       else if (response.status === 429) msg = '❌ Rate limit exceeded. Tunggu beberapa menit.';
       else if (response.status >= 500) msg = '❌ Server error. Coba lagi nanti.';
-      
       throw new Error(msg);
     }
-
     recordApiRequest(1200);
-
     const data = await response.json();
     const aiMessage = data?.choices?.[0]?.message?.content?.trim();
-
-    if (!aiMessage) {
-      throw new Error('❌ API tidak return hasil. Coba lagi.');
-    }
-
+    if (!aiMessage) throw new Error('❌ API tidak return hasil. Coba lagi.');
     if (responseBox) {
       responseBox.innerHTML = `
         <div class="space-y-2">
@@ -1214,9 +995,7 @@ FORMAT: Mudah dibaca, structure jelas, actionable insights.`;
         </div>
       `;
     }
-
     if (promptInput) promptInput.value = '';
-
   } catch (err) {
     console.error('AI Error:', err);
     if (responseBox) {
@@ -1232,40 +1011,24 @@ FORMAT: Mudah dibaca, structure jelas, actionable insights.`;
   }
 }
 
-// ============================================
-// 11. TRANSLATION
-// ============================================
+// ===== 10. TRANSLATION =====
+
 async function translateNewsArticle(cardIdx, headline, description, btnEl) {
   const h_el = document.querySelector(`.news-headline-${cardIdx}`);
   const d_el = document.querySelector(`.news-desc-${cardIdx}`);
-  
-  if (!h_el || !d_el) {
-    alert('❌ Elements NOT FOUND');
-    return;
-  }
-  
-  if (!headline || !headline.trim()) {
-    alert('❌ Headline EMPTY');
-    return;
-  }
-  
+  if (!h_el || !d_el) return;
+  if (!headline || !headline.trim()) return;
   const h = headline.trim();
   const d = (description || '').trim();
-  
   h_el.textContent = '⏳ Translate...';
   d_el.textContent = '⏳ Wait...';
   if (btnEl) btnEl.disabled = true;
-  
   try {
     resetDailyTokens();
     checkApiRateLimit();
-    if (tokensUsedToday >= API_CONFIG.MAX_TOKENS_PER_DAY) {
-      throw new Error("DAILY LIMIT reached");
-    }
-    
+    if (tokensUsedToday >= API_CONFIG.MAX_TOKENS_PER_DAY) throw new Error("DAILY LIMIT");
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
-    
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -1274,27 +1037,19 @@ async function translateNewsArticle(cardIdx, headline, description, btnEl) {
       },
       body: JSON.stringify({
         model: 'openai/gpt-3.5-turbo',
-        messages: [{
-          role: 'user',
-          content: `Translate to Indonesian:\n\n${h}\n${d}\n\nResult only:`
-        }],
+        messages: [{ role: 'user', content: `Translate to Indonesian:\n\n${h}\n${d}\n\nResult only:` }],
         max_tokens: 200
       }),
       signal: controller.signal
     });
-    
     clearTimeout(timeoutId);
     recordApiRequest(200);
-    
     if (!res.ok) throw new Error(`API ${res.status}`);
-    
     const data = await res.json();
     const txt = data?.choices?.[0]?.message?.content?.trim() || '';
     const lines = txt.split('\n').filter(x => x.trim());
-    
     h_el.textContent = lines[0]?.trim() || h;
     d_el.textContent = lines[1]?.trim() || d;
-    
     if (btnEl) {
       btnEl.innerHTML = '<i class="fa-solid fa-check text-emerald-500"></i> ✓';
       btnEl.disabled = true;
@@ -1311,30 +1066,24 @@ async function translateNewsArticle(cardIdx, headline, description, btnEl) {
       btnEl.style.background = '#fef2f2';
       btnEl.style.color = '#dc2626';
     }
-    alert(`❌ TRANSLATE FAILED: ${e.message}`);
   }
 }
 
-// ============================================
-// 12. MATCH DETAIL
-// ============================================
+// ===== 11. MATCH DETAIL =====
+
 async function openMatchDetail(eventId) {
   const modal = document.getElementById('match-detail-modal');
   const content = document.getElementById('match-detail-content');
   if (!modal || !content) return;
-
   modal.classList.remove('hidden');
   content.innerHTML = `<div class="py-12 text-center text-xs"><i class="fa-solid fa-spinner animate-spin text-2xl text-action-blue mb-2"></i><p>Memuat Boxscore Detail...</p></div>`;
-
   try {
     const res = await fetch(getEspnUrl.summary(eventId, currentLeagueSlug));
     const data = await res.json();
-    
     const header = data.header || {};
     const comp = header?.competitions?.[0] || {};
     const home = comp?.competitors?.find(c => c.homeAway === 'home') || {};
     const away = comp?.competitors?.find(c => c.homeAway === 'away') || {};
-
     content.innerHTML = `
       <div class="space-y-4">
         <div class="text-center pb-4 border-b border-slate-200">
@@ -1342,7 +1091,6 @@ async function openMatchDetail(eventId) {
           <h3 class="font-display font-extrabold text-xl mt-1 text-text-main">${away?.team?.displayName || '--'} vs ${home?.team?.displayName || '--'}</h3>
           <p class="text-xs text-text-sub">${header?.season?.name || 'Tournament Game'}</p>
         </div>
-
         <div class="flex justify-around items-center py-4 bg-slate-50 rounded-2xl border border-slate-200">
           <div class="text-center">
             <img src="${away?.team?.logo || ''}" onerror="this.onerror=null; this.src='https://a.espncdn.com/combiner/i?img=/i/teamlogos/leagues/500/nba.png';" class="w-12 h-12 mx-auto mb-1 object-contain">
@@ -1356,7 +1104,6 @@ async function openMatchDetail(eventId) {
             <div class="text-2xl font-mono font-bold text-text-main">${home?.score || '0'}</div>
           </div>
         </div>
-
         <button onclick="window.setAiPrompt('Analisis pertandingan ${away?.team?.displayName || ''} vs ${home?.team?.displayName || ''}'); window.closeModal('match-detail-modal'); window.switchTab('ai');" class="w-full py-3 bg-action-blue text-white rounded-xl font-bold text-xs hover:bg-action-hover active:scale-95 transition-all shadow-md">
           <i class="fa-solid fa-brain me-1"></i> Minta Analisis GaneMaX.ai
         </button>
@@ -1367,9 +1114,134 @@ async function openMatchDetail(eventId) {
   }
 }
 
-// ============================================
-// 13. PAYWALL & QRIS FUNCTIONS
-// ============================================
+// ===== 12. AUTH FUNCTIONS =====
+
+function openAuthModal(mode = 'login') {
+  authTabMode = mode;
+  switchAuthTab(mode);
+  const modal = document.getElementById('auth-modal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function switchAuthTab(mode) {
+  authTabMode = mode;
+  const loginBtn = document.getElementById('auth-tab-login-btn');
+  const regBtn = document.getElementById('auth-tab-register-btn');
+  const nameGroup = document.getElementById('form-group-name');
+  const submitBtn = document.getElementById('auth-submit-btn');
+  if (mode === 'login') {
+    if (loginBtn) loginBtn.className = 'flex-1 pb-3 text-sm font-bold border-b-2 border-action-blue text-action-blue';
+    if (regBtn) regBtn.className = 'flex-1 pb-3 text-sm font-bold border-b-2 border-transparent text-text-sub hover:text-text-main';
+    if (nameGroup) nameGroup.classList.add('hidden');
+    if (submitBtn) submitBtn.textContent = 'Masuk Sekarang';
+  } else {
+    if (regBtn) regBtn.className = 'flex-1 pb-3 text-sm font-bold border-b-2 border-action-blue text-action-blue';
+    if (loginBtn) loginBtn.className = 'flex-1 pb-3 text-sm font-bold border-b-2 border-transparent text-text-sub hover:text-text-main';
+    if (nameGroup) nameGroup.classList.remove('hidden');
+    if (submitBtn) submitBtn.textContent = 'Daftar Akun Baru';
+  }
+}
+
+async function handleAuthSubmit(e) {
+  e.preventDefault();
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value.trim();
+  const fullName = document.getElementById('auth-fullname')?.value.trim();
+  const isSuperAdminEmail = email.toLowerCase() === 'taufiq.pagarnusa99@gmail.com';
+  if (isSuperAdminEmail && password !== '321') {
+    const errorMsg = document.getElementById('auth-error-msg');
+    if (errorMsg) {
+      errorMsg.textContent = "Kata sandi Super Admin salah.";
+      errorMsg.classList.remove('hidden');
+    }
+    return;
+  }
+  let mockUsers = getMockUsersDB();
+  let existing = mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
+  if (!existing) {
+    existing = {
+      id: 'user-' + Date.now(),
+      email: email,
+      full_name: fullName || (isSuperAdminEmail ? 'Taufiq (Super Admin)' : email.split('@')[0]),
+      role: isSuperAdminEmail ? 'admin' : 'user',
+      is_vip: isSuperAdminEmail ? true : false,
+      vip_expires_at: isSuperAdminEmail ? '2099-12-31' : '',
+      subscription_status: isSuperAdminEmail ? 'active' : 'free'
+    };
+    mockUsers.push(existing);
+    setMockUsersDB(mockUsers);
+  } else if (isSuperAdminEmail) {
+    existing.role = 'admin';
+    existing.is_vip = true;
+    existing.vip_expires_at = '2099-12-31';
+    existing.subscription_status = 'active';
+    setMockUsersDB(mockUsers);
+  }
+  currentUser = existing;
+  localStorage.setItem('ganemax_user_session', JSON.stringify(currentUser));
+  closeModal('auth-modal');
+  renderAuthHeader();
+  if (currentUser?.role === 'admin') switchTab('admin');
+}
+
+function handleLogout() {
+  currentUser = null;
+  localStorage.removeItem('ganemax_user_session');
+  closeModal('profile-modal');
+  renderAuthHeader();
+  switchTab('scores');
+}
+
+function openProfileModal() {
+  if (!currentUser) return;
+  const nameEl = document.getElementById('profile-user-name');
+  const emailEl = document.getElementById('profile-user-email');
+  const badgeContainer = document.getElementById('profile-badge-container');
+  const statusText = document.getElementById('profile-vip-status-text');
+  const expiryText = document.getElementById('profile-vip-expiry-text');
+  if (nameEl) nameEl.textContent = currentUser.full_name || 'User';
+  if (emailEl) emailEl.textContent = currentUser.email;
+  const isSuperAdmin = currentUser?.email?.toLowerCase() === 'taufiq.pagarnusa99@gmail.com' || currentUser?.role === 'admin';
+  const isVip = isUserVipActive(currentUser);
+  if (badgeContainer) {
+    if (isSuperAdmin) badgeContainer.innerHTML = `<span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold text-xs border border-amber-300"><i class="fa-solid fa-shield me-1"></i> Super Admin</span>`;
+    else if (isVip) badgeContainer.innerHTML = `<span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-court-gold font-bold text-xs border border-amber-300"><i class="fa-solid fa-crown me-1"></i> VIP PRO</span>`;
+    else badgeContainer.innerHTML = `<span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold text-xs">Free Tier</span>`;
+  }
+  if (statusText) {
+    if (isSuperAdmin) statusText.textContent = 'Unlimited Owner Access';
+    else if (isVip) statusText.textContent = 'Aktif VIP Pro';
+    else statusText.textContent = 'Gratis';
+  }
+  if (expiryText) {
+    if (isSuperAdmin) expiryText.textContent = 'Selamanya (2099)';
+    else if (isVip) expiryText.textContent = currentUser.vip_expires_at ? new Date(currentUser.vip_expires_at).toLocaleDateString('id-ID', {year:'numeric', month:'long', day:'numeric'}) : 'Aktif';
+    else expiryText.textContent = 'Belum Langganan';
+  }
+  const modal = document.getElementById('profile-modal');
+  if (modal) modal.classList.remove('hidden');
+}
+
+function handleProfileNavClick() {
+  if (currentUser) openProfileModal();
+  else openAuthModal('login');
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.add('hidden');
+  const updatedUser = JSON.parse(localStorage.getItem('ganemax_user_session'));
+  if (updatedUser) {
+    currentUser = updatedUser;
+    if (modalId === 'qris-modal' || modalId === 'vip-payment-modal' || modalId === 'vip-success-modal') {
+      renderAuthHeader();
+      checkAiAccessPermission();
+    }
+  }
+}
+
+// ===== 13. PAYWALL & ADMIN =====
+
 function openQrisModal() {
   openQrisModalWithPlan(49000, '1 Bulan VIP Pro');
 }
@@ -1381,13 +1253,10 @@ function openQrisModalWithPlan(amount, planName) {
   }
   selectedQrisAmount = amount;
   selectedQrisPlanName = planName;
-
   const titleEl = document.getElementById('qris-modal-title');
   const priceEl = document.getElementById('qris-price-display');
-  
   if (titleEl) titleEl.textContent = `Pembayaran ${planName}`;
   if (priceEl) priceEl.textContent = `Rp ${amount.toLocaleString('id-ID')}`;
-
   closeModal('profile-modal');
   const modal = document.getElementById('qris-modal');
   if (modal) modal.classList.remove('hidden');
@@ -1395,23 +1264,18 @@ function openQrisModalWithPlan(amount, planName) {
 
 function simulateQrisPayment() {
   if (!currentUser) return;
-
   let daysToAdd = 30;
   if (selectedQrisAmount === 99000) daysToAdd = 60;
   if (selectedQrisAmount === 559000) daysToAdd = 365;
-
   const expDate = new Date();
   expDate.setDate(expDate.getDate() + daysToAdd);
-
   currentUser.is_vip = false;
   currentUser.subscription_status = 'pending_approval';
   currentUser.payment_method = 'qris';
   currentUser.payment_plan = selectedQrisPlanName;
   currentUser.payment_date = new Date().toISOString().split('T')[0];
   currentUser.vip_expires_at = expDate.toISOString().split('T')[0];
-
   localStorage.setItem('ganemax_user_session', JSON.stringify(currentUser));
-
   const mockUsers = getMockUsersDB();
   const uIndex = mockUsers.findIndex(u => u.email === currentUser.email);
   if (uIndex !== -1) {
@@ -1423,37 +1287,19 @@ function simulateQrisPayment() {
     mockUsers[uIndex].vip_expires_at = currentUser.vip_expires_at;
     setMockUsersDB(mockUsers);
   }
-
   closeModal('qris-modal');
   renderAuthHeader();
   renderAdminUserTable();
-
-  const telegramHandle = 'mrpangeranz';
-  const confirmMsg = `✅ Pembayaran QRIS ${selectedQrisPlanName} BERHASIL!\n\n📋 Status: MENUNGGU AKTIVASI ADMIN\n\n💬 Kirim bukti ke Telegram:\n@${telegramHandle}\n\n⏳ Tim CS akan mengaktifkan lisensi setelah verifikasi.`;
-  
-  alert(confirmMsg);
-  
-  setTimeout(() => {
-    const openTg = confirm('Buka Telegram untuk kirim bukti pembayaran?');
-    if (openTg) {
-      window.open(`https://t.me/${telegramHandle}`, '_blank');
-    }
-  }, 300);
+  alert(`✅ Pembayaran QRIS ${selectedQrisPlanName} BERHASIL!\n\nStatus: MENUNGGU AKTIVASI ADMIN\nKirim bukti ke Telegram @mrpangeranz`);
 }
 
-// ============================================
-// 14. ADMIN FUNCTIONS
-// ============================================
 function renderAdminUserTable() {
   const tbody = document.getElementById('admin-user-table-body');
   if (!tbody) return;
-
   const mockUsers = getMockUsersDB();
-
   tbody.innerHTML = mockUsers.map(u => {
     const isVipActive = isUserVipActive(u);
     const expValue = u.vip_expires_at || '';
-
     return `
       <tr class="hover:bg-slate-50">
         <td class="p-3">
@@ -1478,19 +1324,11 @@ function renderAdminUserTable() {
         <td class="p-3">
           <div class="flex gap-1 flex-wrap">
             ${u.subscription_status === 'pending_approval' ? `
-              <button onclick="window.activateUserVip('${u.id}')" class="px-2 py-1 bg-emerald-500 text-white rounded font-bold text-[10px] hover:bg-emerald-600 active:scale-95 transition-all">
-                ✅ Activate
-              </button>
-              <button onclick="window.rejectUserPayment('${u.id}')" class="px-2 py-1 bg-rose-500 text-white rounded font-bold text-[10px] hover:bg-rose-600 active:scale-95 transition-all">
-                ❌ Tolak
-              </button>
+              <button onclick="window.activateUserVip('${u.id}')" class="px-2 py-1 bg-emerald-500 text-white rounded font-bold text-[10px] hover:bg-emerald-600 active:scale-95 transition-all">✅ Activate</button>
+              <button onclick="window.rejectUserPayment('${u.id}')" class="px-2 py-1 bg-rose-500 text-white rounded font-bold text-[10px] hover:bg-rose-600 active:scale-95 transition-all">❌ Tolak</button>
             ` : `
-              <button onclick="window.extendUserVip('${u.id}', 30)" class="px-2 py-1 bg-action-blue text-white rounded font-bold text-[10px] hover:bg-action-hover active:scale-95 transition-all">
-                +1 Bln
-              </button>
-              <button onclick="window.extendUserVip('${u.id}', 365)" class="px-2 py-1 bg-court-gold text-white rounded font-bold text-[10px] hover:brightness-110 active:scale-95 transition-all">
-                +1 Thn
-              </button>
+              <button onclick="window.extendUserVip('${u.id}', 30)" class="px-2 py-1 bg-action-blue text-white rounded font-bold text-[10px] hover:bg-action-hover active:scale-95 transition-all">+1 Bln</button>
+              <button onclick="window.extendUserVip('${u.id}', 365)" class="px-2 py-1 bg-court-gold text-white rounded font-bold text-[10px] hover:brightness-110 active:scale-95 transition-all">+1 Thn</button>
             `}
           </div>
         </td>
@@ -1503,13 +1341,10 @@ function activateUserVip(userId) {
   const mockUsers = getMockUsersDB();
   const user = mockUsers.find(u => u.id === userId);
   if (!user) return;
-
   user.is_vip = true;
   user.subscription_status = 'active';
-  
   setMockUsersDB(mockUsers);
   renderAdminUserTable();
-
   if (currentUser && currentUser.id === userId) {
     currentUser.is_vip = true;
     currentUser.subscription_status = 'active';
@@ -1517,7 +1352,6 @@ function activateUserVip(userId) {
     renderAuthHeader();
     checkAiAccessPermission();
   }
-
   alert(`✅ VIP ${user.full_name || 'User'} berhasil diaktifkan!`);
 }
 
@@ -1525,18 +1359,13 @@ function rejectUserPayment(userId) {
   const mockUsers = getMockUsersDB();
   const user = mockUsers.find(u => u.id === userId);
   if (!user) return;
-
-  const confirm_reject = confirm(`Tolak pembayaran ${user.full_name || 'User'}?`);
-  if (!confirm_reject) return;
-
+  if (!confirm(`Tolak pembayaran ${user.full_name || 'User'}?`)) return;
   user.is_vip = false;
   user.subscription_status = 'free';
   user.payment_method = null;
   user.payment_date = null;
-  
   setMockUsersDB(mockUsers);
   renderAdminUserTable();
-
   if (currentUser && currentUser.id === userId) {
     currentUser.is_vip = false;
     currentUser.subscription_status = 'free';
@@ -1545,25 +1374,15 @@ function rejectUserPayment(userId) {
     renderAuthHeader();
     checkAiAccessPermission();
   }
-
   alert(`❌ Pembayaran ${user.full_name || 'User'} ditolak.`);
 }
 
 function extendUserVip(userId, days) {
   const mockUsers = getMockUsersDB();
   const user = mockUsers.find(u => u.id === userId);
-  if (!user) {
-    // Refresh data
-    const freshUsers = getMockUsersDB();
-    const freshUser = freshUsers.find(u => u.id === userId);
-    if (!freshUser) return;
-    updateUserVipExpiryDate(userId, freshUser.vip_expires_at);
-    return;
-  }
-  
+  if (!user) return;
   const baseDate = user.vip_expires_at ? new Date(user.vip_expires_at) : new Date();
   baseDate.setDate(baseDate.getDate() + days);
-
   const newExpStr = baseDate.toISOString().split('T')[0];
   updateUserVipExpiryDate(userId, newExpStr);
 }
@@ -1574,10 +1393,8 @@ function updateUserVipExpiryDate(userId, dateString) {
   if (user) {
     user.vip_expires_at = dateString;
     user.is_vip = dateString ? new Date(dateString) >= new Date() : false;
-
     setMockUsersDB(mockUsers);
     renderAdminUserTable();
-
     if (currentUser && currentUser.id === userId) {
       currentUser.vip_expires_at = user.vip_expires_at;
       currentUser.is_vip = user.is_vip;
@@ -1593,120 +1410,20 @@ function refreshAdminData() {
   refreshCurrentLeagueData(true);
 }
 
-// ============================================
-// 15. PROFILE & MODAL FUNCTIONS
-// ============================================
-function openProfileModal() {
-  if (!currentUser) return;
-
-  const nameEl = document.getElementById('profile-user-name');
-  const emailEl = document.getElementById('profile-user-email');
-  const badgeContainer = document.getElementById('profile-badge-container');
-  const statusText = document.getElementById('profile-vip-status-text');
-  const expiryText = document.getElementById('profile-vip-expiry-text');
-
-  if (nameEl) nameEl.textContent = currentUser.full_name || 'User';
-  if (emailEl) emailEl.textContent = currentUser.email;
-
-  const isSuperAdmin = currentUser?.email?.toLowerCase() === 'taufiq.pagarnusa99@gmail.com' || currentUser?.role === 'admin';
-  const isVip = isUserVipActive(currentUser);
-
-  if (badgeContainer) {
-    if (isSuperAdmin) {
-      badgeContainer.innerHTML = `<span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-bold text-xs border border-amber-300"><i class="fa-solid fa-shield me-1"></i> Super Admin</span>`;
-    } else if (isVip) {
-      badgeContainer.innerHTML = `<span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-court-gold font-bold text-xs border border-amber-300"><i class="fa-solid fa-crown me-1"></i> VIP PRO</span>`;
-    } else {
-      badgeContainer.innerHTML = `<span class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-500 font-bold text-xs">Free Tier</span>`;
-    }
-  }
-
-  if (statusText) {
-    if (isSuperAdmin) statusText.textContent = 'Unlimited Owner Access';
-    else if (isVip) statusText.textContent = 'Aktif VIP Pro';
-    else statusText.textContent = 'Gratis';
-  }
-
-  if (expiryText) {
-    if (isSuperAdmin) expiryText.textContent = 'Selamanya (2099)';
-    else if (isVip) expiryText.textContent = currentUser.vip_expires_at ? new Date(currentUser.vip_expires_at).toLocaleDateString('id-ID', {year:'numeric', month:'long', day:'numeric'}) : 'Aktif';
-    else expiryText.textContent = 'Belum Langganan';
-  }
-
-  const modal = document.getElementById('profile-modal');
-  if (modal) modal.classList.remove('hidden');
-}
-
-function handleProfileNavClick() {
-  if (currentUser) openProfileModal();
-  else openAuthModal('login');
-}
-
-function closeModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) modal.classList.add('hidden');
-  
-  const updatedUser = JSON.parse(localStorage.getItem('ganemax_user_session'));
-  if (updatedUser) {
-    currentUser = updatedUser;
-    if (modalId === 'qris-modal' || modalId === 'vip-payment-modal' || modalId === 'vip-success-modal') {
-      renderAuthHeader();
-      checkAiAccessPermission();
-    }
-  }
-}
-
-// ============================================
-// 16. AI ACCESS CHECK
-// ============================================
 function checkAiAccessPermission() {
   const overlay = document.getElementById('ai-paywall-overlay');
   const content = document.getElementById('ai-unlocked-content');
-  
-  const wasVipPending = sessionStorage.getItem('vip_was_pending');
   const isVipActive = isUserVipActive(currentUser);
-
   if (isVipActive) {
     if (overlay) overlay.classList.add('hidden');
     if (content) content.classList.remove('hidden');
-    
-    if (wasVipPending === 'true' && currentUser?.subscription_status === 'active') {
-      setTimeout(() => {
-        alert(`🎉 Selamat! Lisensi VIP Anda sudah diaktifkan!\n\nAkses aktif sampai: ${currentUser.vip_expires_at ? new Date(currentUser.vip_expires_at).toLocaleDateString('id-ID', {year:'numeric', month:'long', day:'numeric'}) : 'Selamanya'}`);
-        sessionStorage.removeItem('vip_was_pending');
-      }, 500);
-    }
   } else {
     if (overlay) overlay.classList.remove('hidden');
     if (content) content.classList.add('hidden');
-    
-    if (currentUser?.subscription_status === 'pending_approval') {
-      sessionStorage.setItem('vip_was_pending', 'true');
-    }
   }
 }
 
-// ============================================
-// 17. DOM INITIALIZATION
-// ============================================
-document.addEventListener('DOMContentLoaded', () => {
-  renderLeagueBadges();
-  renderAuthHeader();
-  updateAdminNavVisibility();
-  renderAdminUserTable();
-
-  renderTicker(INITIAL_INSTANT_EVENTS);
-  renderHeroCard(INITIAL_INSTANT_EVENTS[0]);
-  renderMatchCards(INITIAL_INSTANT_EVENTS);
-
-  refreshCurrentLeagueData(false);
-
-  setInterval(() => { fetchEspnScoreboard(false); }, 30000);
-});
-
-// ============================================
-// 18. EXPOSE ALL FUNCTIONS TO GLOBAL
-// ============================================
+// ===== 14. EXPOSE ALL FUNCTIONS TO WINDOW =====
 window.switchTab = switchTab;
 window.changeLeague = changeLeague;
 window.refreshCurrentLeagueData = refreshCurrentLeagueData;
@@ -1738,4 +1455,26 @@ window.updateUserVipExpiryDate = updateUserVipExpiryDate;
 window.translateNewsArticle = translateNewsArticle;
 window.inspectTeamRoster = inspectTeamRoster;
 
-console.log('✅ GaneMaX App Loaded Successfully!');
+// ===== 15. INIT ON DOM READY =====
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 GaneMaX App Initializing...');
+  renderLeagueBadges();
+  renderAuthHeader();
+  updateAdminNavVisibility();
+  renderAdminUserTable();
+
+  // Gunakan data awal jika belum ada
+  if (globalEventsData.length === 0) {
+    globalEventsData = INITIAL_INSTANT_EVENTS;
+  }
+  renderTicker(globalEventsData);
+  renderHeroCard(globalEventsData[0]);
+  renderMatchCards(globalEventsData);
+
+  refreshCurrentLeagueData(false);
+
+  setInterval(() => { fetchEspnScoreboard(false); }, 30000);
+  console.log('✅ GaneMaX App Ready!');
+});
+
+console.log('📦 GaneMaX app.js loaded');
